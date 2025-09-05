@@ -1,0 +1,34 @@
+# Python dependencies for Tenjo Client
+# Employee monitoring application - Updated for Python 3.13.7 compatibility
+
+# Core dependencies
+requests>=2.31.0
+websocket-client>=1.6.0
+psutil>=5.9.0
+
+# Screenshot and screen capture
+mss>=9.0.0
+Pillow>=10.0.0
+
+# Cross-platform window management
+pygetwindow>=0.0.9; platform_system=="Windows"
+pywin32>=306; platform_system=="Windows"
+
+# macOS specific dependencies (compatible with Python 3.13)
+pyobjc-core>=10.0; platform_system=="Darwin"
+pyobjc-framework-Quartz>=10.0; platform_system=="Darwin"
+pyobjc-framework-AppKit>=10.0; platform_system=="Darwin"
+pyobjc-framework-CoreServices>=10.0; platform_system=="Darwin"
+
+# Streaming (optional - FFmpeg required separately)
+# opencv-python>=4.8.0
+
+# System integration
+schedule>=1.2.0
+
+# Utilities
+python-dateutil>=2.8.0
+cryptography>=41.0.0
+
+# Optional: Advanced Windows features
+wmi>=1.5.1; platform_system=="Windows"
