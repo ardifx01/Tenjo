@@ -2,6 +2,76 @@
 
 @section('title', 'Client Details - ' . $client->hostname)
 
+@section('styles')
+<style>
+.browser-activity-table .table td {
+    vertical-align: middle;
+}
+
+.browser-activity-table .badge {
+    font-size: 0.75rem;
+}
+
+.page-details {
+    max-width: 200px;
+}
+
+.page-title {
+    color: #495057;
+    font-weight: 500;
+}
+
+.page-url {
+    color: #6c757d;
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+.browser-icon {
+    margin-right: 4px;
+}
+
+.time-info {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+}
+
+.duration-info {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+    color: #28a745;
+}
+
+.event-badge-page_visit {
+    background-color: #007bff !important;
+}
+
+.event-badge-browser_started {
+    background-color: #28a745 !important;
+}
+
+.event-badge-browser_closed {
+    background-color: #dc3545 !important;
+}
+
+.fa-chrome {
+    color: #4285f4;
+}
+
+.fa-firefox {
+    color: #ff7139;
+}
+
+.fa-safari {
+    color: #006cff;
+}
+
+.fa-edge {
+    color: #0078d4;
+}
+</style>
+@endsection
+
 @section('breadcrumb')
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -204,34 +274,77 @@
     </div>
     <div class="card-body">
         @if($client->browserEvents->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-sm table-striped">
-                    <thead>
+            <div class="table-responsive browser-activity-table">
+                <table class="table table-sm table-striped table-hover">
+                    <thead class="table-dark">
                         <tr>
-                            <th>Time</th>
-                            <th>Event</th>
-                            <th>Browser</th>
-                            <th>Duration</th>
+                            <th width="12%">Time</th>
+                            <th width="15%">Event Type</th>
+                            <th width="18%">Browser</th>
+                            <th width="12%">Duration</th>
+                            <th width="43%">Page Details</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($client->browserEvents->take(10) as $event)
                         <tr>
-                            <td>{{ $event->start_time ? $event->start_time->format('H:i:s') : '-' }}</td>
+                            <td class="time-info">
+                                @if($event->start_time)
+                                    {{ $event->start_time->format('H:i:s') }}
+                                @elseif($event->created_at)
+                                    {{ $event->created_at->format('H:i:s') }}
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                             <td>
-                                <span class="badge {{ $event->event_type === 'browser_started' ? 'bg-success' : 'bg-danger' }}">
+                                <span class="badge event-badge-{{ $event->event_type }} {{ $event->event_type === 'browser_started' ? 'bg-success' : ($event->event_type === 'browser_closed' ? 'bg-danger' : 'bg-info') }}">
                                     {{ ucfirst(str_replace('_', ' ', $event->event_type)) }}
                                 </span>
                             </td>
-                            <td>{{ $event->browser_name }}</td>
-                            <td>{{ $event->duration ? gmdate('H:i:s', $event->duration) : '-' }}</td>
+                            <td>
+                                @if($event->browser_name)
+                                    <i class="fab fa-{{ strtolower($event->browser_name) === 'chrome' ? 'chrome' : (strtolower($event->browser_name) === 'firefox' ? 'firefox-browser' : (strtolower($event->browser_name) === 'safari' ? 'safari' : (strtolower($event->browser_name) === 'edge' ? 'edge' : 'globe'))) }} browser-icon"></i>
+                                    {{ $event->browser_name }}
+                                @else
+                                    <i class="fas fa-globe browser-icon"></i>
+                                    <span class="text-muted">Unknown Browser</span>
+                                @endif
+                            </td>
+                            <td class="duration-info">
+                                @if($event->duration)
+                                    {{ $event->duration_human }}
+                                @elseif($event->start_time && $event->end_time)
+                                    {{ gmdate('H:i:s', $event->end_time->diffInSeconds($event->start_time)) }}
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td class="page-details">
+                                @if($event->title || $event->url)
+                                    <div class="d-flex flex-column">
+                                        @if($event->title)
+                                            <span class="page-title" title="{{ $event->title }}">{{ Str::limit($event->title, 35) }}</span>
+                                        @endif
+                                        @if($event->url)
+                                            <small class="page-url" title="{{ $event->url }}">{{ Str::limit($event->url, 45) }}</small>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @else
-            <p class="text-muted text-center">No browser activity recorded today.</p>
+            <div class="text-center py-4">
+                <i class="fas fa-globe fa-3x text-muted mb-3"></i>
+                <h6 class="text-muted">No Browser Activity</h6>
+                <p class="text-muted">No browser activity recorded for this client yet.</p>
+            </div>
         @endif
     </div>
 </div>
@@ -255,6 +368,53 @@
 
 @section('scripts')
 <script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                trigger: 'hover focus',
+                delay: { show: 500, hide: 100 }
+            });
+        });
+
+        // Auto-refresh browser activity every 30 seconds
+        setInterval(function() {
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('/details')) {
+                // Refresh only the browser activity section via AJAX
+                fetch(currentUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Extract and update browser activity table
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.querySelector('.browser-activity-table');
+                    const currentTable = document.querySelector('.browser-activity-table');
+
+                    if (newTable && currentTable) {
+                        currentTable.innerHTML = newTable.innerHTML;
+                        // Reinitialize tooltips for new content
+                        var newTooltips = [].slice.call(currentTable.querySelectorAll('[title]'));
+                        newTooltips.map(function (el) {
+                            return new bootstrap.Tooltip(el, {
+                                trigger: 'hover focus',
+                                delay: { show: 500, hide: 100 }
+                            });
+                        });
+                    }
+                })
+                .catch(error => console.log('Auto-refresh failed:', error));
+            }
+        }, 30000);
+    });
+
     // Screenshot modal
     document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('screenshotModal');
