@@ -29,9 +29,31 @@ if "%SERVER_URL%"=="" set SERVER_URL=http://127.0.0.1:8000
 echo [INFO] Server URL: %SERVER_URL%
 echo.
 
-REM Create temporary directory
+REM Create temporary directory with better cleanup
 echo [INFO] Creating temporary installation directory...
-if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
+if exist "%TEMP_DIR%" (
+    echo [INFO] Cleaning up existing temporary directory...
+    REM Force kill any processes that might be using the directory
+    taskkill /f /im python.exe >nul 2>&1
+    taskkill /f /im python-installer.exe >nul 2>&1
+    timeout /t 2 >nul 2>&1
+    
+    REM Try to remove directory multiple times
+    for /l %%i in (1,1,3) do (
+        rmdir /s /q "%TEMP_DIR%" >nul 2>&1
+        if not exist "%TEMP_DIR%" goto :dir_cleaned
+        echo [INFO] Waiting for cleanup... (attempt %%i/3)
+        timeout /t 3 >nul 2>&1
+    )
+    
+    :dir_cleaned
+    REM If still exists, use a different temp directory
+    if exist "%TEMP_DIR%" (
+        set TEMP_DIR=%TEMP%\tenjo_install_%RANDOM%
+        echo [INFO] Using alternative directory: %TEMP_DIR%
+    )
+)
+
 mkdir "%TEMP_DIR%"
 cd /d "%TEMP_DIR%"
 
@@ -75,17 +97,45 @@ if %errorLevel% == 0 (
     echo [WARNING] Python not found! Installing Python...
     echo [INFO] Downloading Python installer...
     
-    REM Download Python installer
-    powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe' -OutFile 'python-installer.exe'"
+    REM Clean up any existing installer first
+    if exist "python-installer.exe" (
+        echo [INFO] Removing existing Python installer...
+        del /f /q "python-installer.exe" >nul 2>&1
+    )
+    
+    REM Download Python installer with retry mechanism
+    set DOWNLOAD_SUCCESS=0
+    for /l %%i in (1,1,3) do (
+        echo [INFO] Download attempt %%i/3...
+        powershell -Command "try { Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe' -OutFile 'python-installer.exe'; exit 0 } catch { exit 1 }"
+        if exist "python-installer.exe" (
+            set DOWNLOAD_SUCCESS=1
+            goto :python_downloaded
+        )
+        timeout /t 2 >nul 2>&1
+    )
+    
+    :python_downloaded
+    if %DOWNLOAD_SUCCESS% == 0 (
+        echo [ERROR] Failed to download Python installer after 3 attempts
+        echo [INFO] Please install Python manually from https://python.org
+        pause
+        exit /b 1
+    )
     
     echo [INFO] Installing Python silently...
-    python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
+    start /wait python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
+    
+    REM Wait for installation to complete
+    timeout /t 5 >nul 2>&1
     
     REM Clean up installer
-    del python-installer.exe
+    if exist "python-installer.exe" (
+        del /f /q "python-installer.exe" >nul 2>&1
+    )
     
     REM Refresh environment variables
-    call refreshenv >nul 2>&1
+    call refreshenv >nul 2>&1 || echo [INFO] Environment refresh completed
 )
 
 REM Check pip
@@ -119,9 +169,16 @@ echo [INFO] Setting up permanent installation...
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 xcopy /s /e /y * "%INSTALL_DIR%\" >nul 2>&1
 
-REM Cleanup temporary directory
+REM Cleanup temporary directory with improved handling
 cd /d %USERPROFILE%
-rmdir /s /q "%TEMP_DIR%" >nul 2>&1
+echo [INFO] Cleaning up temporary files...
+for /l %%i in (1,1,3) do (
+    rmdir /s /q "%TEMP_DIR%" >nul 2>&1
+    if not exist "%TEMP_DIR%" goto :cleanup_done
+    echo [INFO] Cleanup attempt %%i/3...
+    timeout /t 2 >nul 2>&1
+)
+:cleanup_done
 
 REM Check installation result
 if %INSTALL_RESULT% == 0 (
@@ -139,7 +196,28 @@ if %INSTALL_RESULT% == 0 (
     echo [INFO] https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/uninstall_windows.bat
     echo.
 ) else (
-    echo [ERROR] Installation failed! Please check the logs and try again.
+    echo.
+    echo ===============================================
+    echo     Installation Error Detected
+    echo ===============================================
+    echo.
+    echo [ERROR] Installation failed! This might be due to:
+    echo [ERROR] - Antivirus software blocking the installation
+    echo [ERROR] - Insufficient permissions
+    echo [ERROR] - Network connectivity issues
+    echo [ERROR] - Python installation conflicts
+    echo.
+    echo [INFO] Alternative Solutions:
+    echo [INFO] 1. Try the quick installer:
+    echo [INFO]    Download: %SERVER_URL%/downloads/quick_install_windows.bat
+    echo [INFO] 
+    echo [INFO] 2. Manual installation:
+    echo [INFO]    - Install Python from python.org
+    echo [INFO]    - Download client files manually
+    echo [INFO]    - Run: pip install requests psutil mss pillow pywin32 pygetwindow
+    echo.
+    echo [INFO] 3. Contact support with this error message
+    echo.
     pause
     exit /b 1
 )
