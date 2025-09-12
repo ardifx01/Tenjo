@@ -38,7 +38,8 @@ print_error() {
 # Get server URL from user
 echo -e "${YELLOW}Enter dashboard server URL (default: http://127.0.0.1:8000):${NC}"
 read -r SERVER_URL
-if [ -z "$SERVER_URL" ]; then
+if [ -z "$SERVER_URL" ]
+then
     SERVER_URL="http://127.0.0.1:8000"
 fi
 
