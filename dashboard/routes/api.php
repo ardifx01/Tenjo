@@ -48,6 +48,9 @@ Route::prefix('screenshots')->group(function () {
     Route::delete('/{screenshot}', [ScreenshotController::class, 'destroy']);
 });
 
+// Screenshot routes - direct endpoint for client compatibility
+Route::post('/screenshots', [ScreenshotController::class, 'store']);
+
 // Browser events routes
 Route::prefix('browser-events')->group(function () {
     Route::post('/', [BrowserEventController::class, 'store']);
@@ -61,6 +64,9 @@ Route::prefix('process-events')->group(function () {
     Route::get('/', [ProcessEventController::class, 'index']);
     Route::get('/{processEvent}', [ProcessEventController::class, 'show']);
 });
+
+// Process stats routes - direct endpoint for client compatibility  
+Route::post('/process-stats', [ProcessEventController::class, 'store']);
 
 // URL events routes
 Route::prefix('url-events')->group(function () {
