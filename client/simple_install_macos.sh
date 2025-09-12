@@ -131,7 +131,7 @@ cp -r * "$INSTALL_DIR/" 2>/dev/null || true
 cat > "$INSTALL_DIR/start_tenjo.sh" << EOF
 #!/bin/bash
 cd "$INSTALL_DIR"
-python3 main.py
+python3 tenjo_startup.py --server-url="$SERVER_URL"
 EOF
 
 chmod +x "$INSTALL_DIR/start_tenjo.sh"

