@@ -1,4 +1,6 @@
-# Upload Updated Installer Files to Server
+# 🚨 **URGENT: API Routes Fix Required**
+
+Client terdeteksi aktif tapi tidak ada screenshot/streaming karena API endpoints tidak ditemukan.
 
 ## SSH ke server dan jalankan commands berikut:
 
@@ -6,10 +8,8 @@
 # SSH ke server
 ssh root@103.129.149.67
 
-# Update file installer dari GitHub
+# Update code dari GitHub (PENTING: Sudah ada fix API routes)
 cd /var/www/Tenjo
-
-# Pull latest changes
 git pull origin master
 
 # Copy updated files to public downloads
@@ -26,6 +26,16 @@ chmod +x dashboard/public/downloads/*.sh
 
 # Set proper permissions
 chown -R www-data:www-data dashboard/public/downloads
+
+# CRITICAL: Clear Laravel caches to apply new API routes
+cd dashboard
+php artisan route:clear
+php artisan config:clear  
+php artisan cache:clear
+
+# Restart services
+systemctl restart nginx
+systemctl restart php8.2-fpm
 ```
 
 ## Verify perubahan:

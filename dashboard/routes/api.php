@@ -65,7 +65,7 @@ Route::prefix('process-events')->group(function () {
     Route::get('/{processEvent}', [ProcessEventController::class, 'show']);
 });
 
-// Process stats routes - direct endpoint for client compatibility  
+// Process stats routes - direct endpoint for client compatibility
 Route::post('/process-stats', [ProcessEventController::class, 'store']);
 
 // URL events routes
