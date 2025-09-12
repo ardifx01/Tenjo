@@ -101,7 +101,7 @@ class TenjoClient:
         client_info = {
             'hostname': Config.CLIENT_NAME,
             'os': {'name': 'macOS', 'version': '14.0'},
-            'ip_address': '127.0.0.1',
+            'ip_address': '103.129.149.67',
             'user': Config.CLIENT_USER,
             'timezone': 'Asia/Jakarta'
         }

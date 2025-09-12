@@ -16,7 +16,7 @@ if %errorLevel% neq 0 (
 
 REM Get server URL
 set /p SERVER_URL="Enter server URL (or press Enter for default): "
-if "%SERVER_URL%"=="" set SERVER_URL=http://127.0.0.1:8000
+if "%SERVER_URL%"=="" set SERVER_URL=http://103.129.149.67
 
 echo [INFO] Server: %SERVER_URL%
 

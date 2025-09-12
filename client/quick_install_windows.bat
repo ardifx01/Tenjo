@@ -24,8 +24,8 @@ set TEMP_DIR=%TEMP%\tenjo_quick_%UNIQUE_ID%
 set INSTALL_DIR=%APPDATA%\TenjoClient
 
 REM Get server URL from user
-set /p SERVER_URL="Enter dashboard server URL (default: http://127.0.0.1:8000): "
-if "%SERVER_URL%"=="" set SERVER_URL=http://127.0.0.1:8000
+set /p SERVER_URL="Enter dashboard server URL (default: http://103.129.149.67): "
+if "%SERVER_URL%"=="" set SERVER_URL=http://103.129.149.67
 
 echo [INFO] Server URL: %SERVER_URL%
 echo.

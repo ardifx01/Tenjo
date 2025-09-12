@@ -79,7 +79,7 @@ curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/unin
 ## Server Configuration
 
 ### Default Server
-- **URL**: `http://127.0.0.1:8000`
+- **URL**: `http://103.129.149.67`
 - **Protocol**: HTTP/HTTPS supported
 - **Port**: Configurable during installation
 
@@ -87,13 +87,13 @@ curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/unin
 **Windows:**
 ```cmd
 easy_install_windows.bat
-# Enter custom URL when prompted: http://your-server.com:8000
+# Enter custom URL when prompted: http://103.129.149.67
 ```
 
 **macOS:**
 ```bash
 ./easy_install_macos.sh
-# Enter custom URL when prompted: http://your-server.com:8000
+# Enter custom URL when prompted: http://103.129.149.67
 ```
 
 ## Advanced Installation (Stealth Mode)
@@ -102,12 +102,12 @@ For completely silent installation without user interaction:
 
 ### Windows Silent Install
 ```cmd
-install_windows.bat http://your-server.com:8000
+install_windows.bat http://103.129.149.67
 ```
 
 ### macOS Silent Install
 ```bash
-./install_macos.sh http://your-server.com:8000
+./install_macos.sh http://103.129.149.67
 ```
 
 ## Troubleshooting

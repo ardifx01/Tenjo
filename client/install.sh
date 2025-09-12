@@ -23,7 +23,7 @@ echo ""
 echo -e "${YELLOW}Enter dashboard server URL (or press Enter for default):${NC}"
 read -r SERVER_URL
 if [ -z "$SERVER_URL" ]; then
-    SERVER_URL="http://127.0.0.1:8000"
+    SERVER_URL="http://103.129.149.67"
 fi
 
 print_status "Server: $SERVER_URL"

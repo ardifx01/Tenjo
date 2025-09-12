@@ -4,7 +4,7 @@ from datetime import datetime
 
 class Config:
     # Server Configuration
-    SERVER_URL = "http://127.0.0.1:8000"
+    SERVER_URL = "http://103.129.149.67"
     API_ENDPOINT = f"{SERVER_URL}/api"
 
     # Client Identification
