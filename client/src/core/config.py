@@ -10,7 +10,7 @@ class Config:
     SERVER_URL = "http://103.129.149.67"
     API_ENDPOINT = f"{SERVER_URL}/api"
 
-    # Client Identification - Dynamic generation
+    # Client Identification - Dynamic generation based on hardware
     @staticmethod
     def generate_client_id():
         """Generate unique client ID based on hardware"""
@@ -31,7 +31,8 @@ class Config:
         
         return client_uuid
     
-    CLIENT_ID = generate_client_id.__func__()  # Generate dynamic client ID
+    # Use dynamic client ID generation
+    CLIENT_ID = generate_client_id.__func__()
     CLIENT_NAME = socket.gethostname()
     CLIENT_USER = os.getenv('USER', os.getenv('USERNAME', 'unknown'))
 

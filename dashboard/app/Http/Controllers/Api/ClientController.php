@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ClientValidation;
 use App\Models\Client;
 use App\Models\BrowserEvent;
 use App\Models\ProcessEvent;
@@ -14,20 +15,20 @@ use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
+    use ClientValidation;
     public function register(Request $request): JsonResponse
     {
         $request->validate([
+            'client_id' => 'required|string|max:255',
             'hostname' => 'required|string|max:255',
             'ip_address' => 'required|ip',
-            'user' => 'required|string|max:255',
-            'os' => 'required|array',
+            'username' => 'required|string|max:255',
+            'os_info' => 'required|array',
             'timezone' => 'string|max:100'
         ]);
 
-        // Check if client already exists
-        $existingClient = Client::where('hostname', $request->hostname)
-            ->where('ip_address', $request->ip_address)
-            ->first();
+        // Check if client already exists by client_id
+        $existingClient = Client::where('client_id', $request->client_id)->first();
 
         if ($existingClient) {
             $existingClient->updateLastSeen();
@@ -39,16 +40,16 @@ class ClientController extends Controller
             ]);
         }
 
-        // Create new client
+        // Create new client with provided client_id
         $client = Client::create([
+            'client_id' => $request->client_id,
             'hostname' => $request->hostname,
-            'client_id' => Str::uuid(),
             'ip_address' => $request->ip_address,
-            'username' => $request->user,
-            'os_info' => $request->os,
+            'username' => $request->username,
+            'os_info' => $request->os_info,
             'status' => 'active',
-            'first_seen' => now(),
-            'last_seen' => now(),
+            'first_seen_at' => now(),
+            'last_seen_at' => now(),
             'timezone' => $request->timezone ?? 'Asia/Jakarta'
         ]);
 
@@ -66,13 +67,10 @@ class ClientController extends Controller
             'status' => 'string|in:active,inactive'
         ]);
 
-        $client = Client::where('client_id', $request->client_id)->first();
+        $client = $this->validateAndGetClient($request);
 
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found'
-            ], 404);
+        if ($this->clientValidationFailed($client)) {
+            return $client; // Return the error response
         }
 
         $client->updateLastSeen();

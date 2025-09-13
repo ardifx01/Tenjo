@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ClientValidation;
 use App\Models\Client;
 use App\Models\Screenshot;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Support\Str;
 
 class ScreenshotController extends Controller
 {
+    use ClientValidation;
+
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -22,13 +25,10 @@ class ScreenshotController extends Controller
             'timestamp' => 'required|date'
         ]);
 
-        $client = Client::where('client_id', $request->client_id)->first();
+        $client = $this->validateAndGetClient($request);
 
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found'
-            ], 404);
+        if ($this->clientValidationFailed($client)) {
+            return $client; // Return the error response
         }
 
         try {
@@ -91,13 +91,10 @@ class ScreenshotController extends Controller
             'monitor' => 'integer|min:1'
         ]);
 
-        $client = Client::where('client_id', $request->client_id)->first();
+        $client = $this->validateAndGetClient($request);
 
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found'
-            ], 404);
+        if ($this->clientValidationFailed($client)) {
+            return $client; // Return the error response
         }
 
         try {
@@ -148,7 +145,7 @@ class ScreenshotController extends Controller
     {
         $query = Screenshot::with('client');
 
-        // Filter by client
+        // Apply client filtering similar to other controllers
         if ($request->has('client_id')) {
             $client = Client::where('client_id', $request->client_id)->first();
             if ($client) {
@@ -156,7 +153,7 @@ class ScreenshotController extends Controller
             }
         }
 
-        // Filter by date range
+        // Filter by date range (using captured_at instead of start_time)
         if ($request->has('from')) {
             $query->where('captured_at', '>=', $request->from);
         }

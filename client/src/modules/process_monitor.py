@@ -149,7 +149,7 @@ class ProcessMonitor:
                 
         if stats_data:
             # Send batch stats update
-            self.api_client.post('/api/process-stats', {'stats': stats_data})
+            self.api_client.post('/api/system-stats', {'stats': stats_data, 'client_id': Config.CLIENT_ID})
             
     def get_system_info(self):
         """Get system information"""
@@ -173,25 +173,49 @@ class ProcessMonitor:
             
     def send_process_event(self, event_type, proc_info, timestamp, start_time=None, duration=None):
         """Send process event to server"""
+        from datetime import datetime
+        
+        # Handle timestamp parameter - can be string, datetime, or float
+        if isinstance(timestamp, str):
+            formatted_timestamp = timestamp
+        elif isinstance(timestamp, (int, float)):
+            formatted_timestamp = datetime.fromtimestamp(timestamp).isoformat()
+        else:
+            formatted_timestamp = timestamp.isoformat()
+            
         data = {
             'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'process_name': proc_info['name'],
             'process_pid': proc_info['pid'],
-            'timestamp': timestamp.isoformat(),
+            'timestamp': formatted_timestamp,
         }
         
         if start_time:
-            data['start_time'] = start_time.isoformat()
+            if isinstance(start_time, str):
+                data['start_time'] = start_time
+            elif isinstance(start_time, (int, float)):
+                data['start_time'] = datetime.fromtimestamp(start_time).isoformat()
+            else:
+                data['start_time'] = start_time.isoformat()
             
         if duration:
-            data['duration'] = duration
+            data['duration'] = int(duration)  # Ensure integer
             
         # Add system info for process start events
         if event_type == 'process_started':
             data['system_info'] = self.get_system_info()
+        else:
+            data['system_info'] = {}  # Ensure system_info is always present
             
-        self.api_client.post('/api/process-events', data)
+        try:
+            response = self.api_client.post('/api/process-events', data)
+            if not response:
+                logging.error(f"Failed to send process event: {event_type} for {proc_info['name']}")
+            else:
+                logging.debug(f"Process event sent successfully: {event_type} for {proc_info['name']}")
+        except Exception as e:
+            logging.error(f"Error sending process event: {str(e)}")
         
     def stop_monitoring(self):
         """Stop process monitoring"""

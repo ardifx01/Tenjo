@@ -86,7 +86,8 @@ class APIClient:
                 time.sleep(self.retry_delay)
                 
         logging.error(f"Failed to complete {method} request to {endpoint} after {self.max_retries} attempts")
-        return None
+        # Raise exception instead of returning None for better error handling
+        raise Exception(f"API request failed: {method} {endpoint} after {self.max_retries} attempts")
         
     def upload_file(self, endpoint, file_data, filename, additional_data=None):
         """Upload file to API"""
@@ -175,6 +176,32 @@ class APIClient:
     def send_url_data(self, url_data):
         """Send URL access data"""
         return self.post('/api/url-events', url_data)
+        
+    # Helper methods for easy testing
+    def send_test_browser_event(self, client_id, event_type='page_visit', browser_name='Chrome', url='https://test.com', title='Test Page'):
+        """Send test browser event with required fields"""
+        from datetime import datetime
+        data = {
+            'client_id': client_id,
+            'event_type': event_type,
+            'browser_name': browser_name,
+            'url': url,
+            'title': title,
+            'timestamp': datetime.now().isoformat()
+        }
+        return self.send_browser_data(data)
+        
+    def send_test_process_event(self, client_id, event_type='process_started', process_name='python3', process_pid=12345):
+        """Send test process event with required fields"""
+        from datetime import datetime
+        data = {
+            'client_id': client_id,
+            'event_type': event_type,
+            'process_name': process_name,
+            'process_pid': process_pid,
+            'timestamp': datetime.now().isoformat()
+        }
+        return self.send_process_data(data)
         
     def get_client_settings(self, client_id):
         """Get client-specific settings"""

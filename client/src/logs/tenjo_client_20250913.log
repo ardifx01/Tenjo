@@ -1,0 +1,141 @@
+2025-09-13 10:00:39 - INFO - Client registered successfully
+2025-09-13 10:00:39 - INFO - Screenshot capture started
+2025-09-13 10:00:39 - INFO - Browser monitoring started
+2025-09-13 10:00:39 - INFO - Process monitoring started
+2025-09-13 10:00:39 - INFO - Stream handler started - waiting for stream requests
+2025-09-13 10:00:39 - INFO - Tenjo client started successfully
+2025-09-13 10:00:39 - INFO - Screenshot 1 uploaded successfully
+2025-09-13 10:00:39 - INFO - Screenshot capture cycle completed
+2025-09-13 10:01:00 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:01:02 - INFO - Client registered successfully
+2025-09-13 10:01:02 - INFO - Screenshot capture started
+2025-09-13 10:01:02 - INFO - Browser monitoring started
+2025-09-13 10:01:02 - INFO - Process monitoring started
+2025-09-13 10:01:02 - INFO - Stream handler started - waiting for stream requests
+2025-09-13 10:01:02 - INFO - Tenjo client started successfully
+2025-09-13 10:01:02 - INFO - Screenshot 1 uploaded successfully
+2025-09-13 10:01:02 - INFO - Screenshot capture cycle completed
+2025-09-13 10:01:10 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:01:20 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:01:21 - INFO - Client stopped by user
+2025-09-13 10:01:30 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:01:40 - INFO - Screenshot 1 uploaded successfully
+2025-09-13 10:01:40 - INFO - Screenshot capture cycle completed
+2025-09-13 10:01:40 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:01:50 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:01 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:06 - INFO - Starting stealth stream with quality: medium
+2025-09-13 10:02:12 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:22 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:32 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:40 - INFO - Screenshot 1 uploaded successfully
+2025-09-13 10:02:40 - INFO - Screenshot capture cycle completed
+2025-09-13 10:02:42 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:02:52 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:03:02 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:03:12 - WARNING - API endpoint not found: /api/process-stats
+2025-09-13 10:03:16 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:17 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b9b0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:19 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b680>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:21 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bce0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:21 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:22 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:23 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bdf0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:25 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bac0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:26 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:26 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:03:27 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:27 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b9b0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:27 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:29 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b64160>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:31 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b64380>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:32 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:32 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:32 - ERROR - Failed to complete POST request to /api/process-stats after 3 attempts
+2025-09-13 10:03:33 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b64af0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:35 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b64d10>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:37 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:37 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:03:37 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:37 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b65370>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:39 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b65590>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:39 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:40 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:41 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b65bf0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:42 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:42 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:43 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bbd0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:44 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:45 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:45 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251af10>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:47 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:47 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:03:47 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:47 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b84380>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:47 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:49 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b847c0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:49 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:49 - ERROR - Failed to complete POST request to /api/clients/heartbeat after 3 attempts
+2025-09-13 10:03:50 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:50 - ERROR - Failed to complete POST request to /api/screenshots after 3 attempts
+2025-09-13 10:03:50 - ERROR - Failed to upload screenshot 1
+2025-09-13 10:03:50 - INFO - Screenshot capture cycle completed
+2025-09-13 10:03:51 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b84e20>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:52 - WARNING - Connection error on attempt 2
+2025-09-13 10:03:52 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:52 - ERROR - Failed to complete POST request to /api/process-stats after 3 attempts
+2025-09-13 10:03:53 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85590>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:55 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b857b0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:57 - WARNING - Connection error on attempt 3
+2025-09-13 10:03:57 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:03:57 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85bf0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:03:57 - WARNING - Connection error on attempt 1
+2025-09-13 10:03:59 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b86030>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:01 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b86250>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:02 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:02 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:03 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bdf0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:05 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bac0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:07 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bce0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:07 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:07 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:04:07 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:07 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:09 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b86140>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:11 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85f20>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:12 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:12 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:12 - ERROR - Failed to complete POST request to /api/process-stats after 3 attempts
+2025-09-13 10:04:13 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85590>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:15 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85480>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:17 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85370>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:17 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:17 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:04:17 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:19 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b84d10>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:21 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b84af0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:22 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:22 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:23 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251bbd0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:25 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b460>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:27 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b8a0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:27 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:27 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:27 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:04:28 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:29 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b84f30>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:31 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85150>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:32 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:32 - ERROR - Failed to complete POST request to /api/process-stats after 3 attempts
+2025-09-13 10:04:33 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:33 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b856a0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:35 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85ae0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:37 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b85d00>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:38 - WARNING - Connection error on attempt 3
+2025-09-13 10:04:38 - ERROR - Failed to complete POST request to /api/stream/chunk/33ba500a-fdea-6619-b1e7-0ede2979bd73 after 3 attempts
+2025-09-13 10:04:38 - WARNING - Connection error on attempt 1
+2025-09-13 10:04:39 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b86360>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:41 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102b86250>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:43 - WARNING - Connection error on attempt 2
+2025-09-13 10:04:43 - ERROR - Error checking stream requests: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /api/stream/request/33ba500a-fdea-6619-b1e7-0ede2979bd73 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10251b8a0>: Failed to establish a new connection: [Errno 61] Connection refused'))
+2025-09-13 10:04:43 - WARNING - Connection error on attempt 1

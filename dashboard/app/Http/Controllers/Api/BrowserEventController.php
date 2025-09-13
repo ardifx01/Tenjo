@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ClientValidation;
 use App\Models\Client;
 use App\Models\BrowserEvent;
 use Illuminate\Http\Request;
@@ -10,26 +11,23 @@ use Illuminate\Http\JsonResponse;
 
 class BrowserEventController extends Controller
 {
+    use ClientValidation;
+
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'client_id' => 'required|string',
+        $validationRules = array_merge($this->getCommonEventValidationRules(), [
             'event_type' => 'required|string|in:browser_started,browser_closed,page_visit,tab_opened,tab_closed',
             'browser_name' => 'required|string',
-            'timestamp' => 'required|date',
             'url' => 'string|nullable',
             'title' => 'string|nullable',
-            'start_time' => 'date',
-            'duration' => 'integer|min:0'
         ]);
 
-        $client = Client::where('client_id', $request->client_id)->first();
+        $request->validate($validationRules);
 
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found'
-            ], 404);
+        $client = $this->validateAndGetClient($request);
+
+        if ($this->clientValidationFailed($client)) {
+            return $client; // Return the error response
         }
 
         try {
@@ -88,31 +86,12 @@ class BrowserEventController extends Controller
     {
         $query = BrowserEvent::with('client');
 
-        // Filter by client
-        if ($request->has('client_id')) {
-            $client = Client::where('client_id', $request->client_id)->first();
-            if ($client) {
-                $query->where('client_id', $client->id);
-            }
-        }
+        // Apply common filters (client_id, event_type, date range)
+        $query = $this->applyCommonFilters($query, $request);
 
-        // Filter by browser name
+        // Filter by browser name (specific to browser events)
         if ($request->has('browser_name')) {
             $query->where('browser_name', 'like', '%' . $request->browser_name . '%');
-        }
-
-        // Filter by event type
-        if ($request->has('event_type')) {
-            $query->where('event_type', $request->event_type);
-        }
-
-        // Filter by date range
-        if ($request->has('from')) {
-            $query->where('start_time', '>=', $request->from);
-        }
-
-        if ($request->has('to')) {
-            $query->where('start_time', '<=', $request->to);
         }
 
         $browserEvents = $query->orderBy('start_time', 'desc')

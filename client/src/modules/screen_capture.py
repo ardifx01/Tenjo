@@ -62,11 +62,14 @@ class ScreenCapture:
                     
                     # Send to server
                     if self.api_client:
-                        response = self.api_client.post('/api/screenshots', data)
-                        if response:
-                            logging.info(f"Screenshot {i+1} uploaded successfully")
-                        else:
-                            logging.error(f"Failed to upload screenshot {i+1}")
+                        try:
+                            response = self.api_client.post('/api/screenshots', data)
+                            if response:
+                                logging.info(f"Screenshot {i+1} uploaded successfully")
+                            else:
+                                logging.error(f"Failed to upload screenshot {i+1}")
+                        except Exception as upload_error:
+                            logging.error(f"Error uploading screenshot {i+1}: {str(upload_error)}")
                     
             logging.info("Screenshot capture cycle completed")
             return True

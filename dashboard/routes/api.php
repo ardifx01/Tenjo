@@ -37,6 +37,12 @@ Route::prefix('stream')->group(function () {
     Route::post('/stop/{clientId}', [StreamController::class, 'stopStream']);
     Route::get('/events/{clientId}', [StreamController::class, 'streamEvents']);
     Route::get('/latest/{clientId}', [StreamController::class, 'getLatestChunk']);
+
+    // WebSocket support
+    Route::get('/websocket-url', function () {
+        $wsUrl = config('app.websocket_url', 'ws://103.129.149.67:6001');
+        return response()->json(['websocket_url' => $wsUrl]);
+    });
 });
 
 // Screenshot routes
@@ -48,55 +54,35 @@ Route::prefix('screenshots')->group(function () {
     Route::delete('/{screenshot}', [ScreenshotController::class, 'destroy']);
 });
 
-// Screenshot routes - direct endpoint for client compatibility
-Route::post('/screenshots', [ScreenshotController::class, 'store']);
-
-// Browser events routes
+// Browser Events routes
 Route::prefix('browser-events')->group(function () {
     Route::post('/', [BrowserEventController::class, 'store']);
     Route::get('/', [BrowserEventController::class, 'index']);
-    Route::get('/{browserEvent}', [BrowserEventController::class, 'show']);
+    Route::get('/{event}', [BrowserEventController::class, 'show']);
 });
 
-// Process events routes
+// Process Events routes
 Route::prefix('process-events')->group(function () {
     Route::post('/', [ProcessEventController::class, 'store']);
     Route::get('/', [ProcessEventController::class, 'index']);
-    Route::get('/{processEvent}', [ProcessEventController::class, 'show']);
+    Route::get('/{event}', [ProcessEventController::class, 'show']);
 });
 
-// Process stats routes - direct endpoint for client compatibility
-Route::post('/process-stats', [ProcessEventController::class, 'store']);
-
-// URL events routes
+// URL Events routes
 Route::prefix('url-events')->group(function () {
     Route::post('/', [UrlEventController::class, 'store']);
     Route::get('/', [UrlEventController::class, 'index']);
-    Route::get('/{urlEvent}', [UrlEventController::class, 'show']);
+    Route::get('/{event}', [UrlEventController::class, 'show']);
 });
 
-// Streaming routes
-Route::prefix('stream')->group(function () {
-    Route::get('/requests', function (Request $request) {
-        // Check if streaming is requested for a client
-        $clientId = $request->get('client_id');
+// System stats endpoint
+Route::post('/system-stats', function (Request $request) {
+    $request->validate(['client_id' => 'required|string']);
 
-        // For now, return a simple response
-        // In production, this would check database for streaming requests
-        return response()->json([
-            'stream_requested' => false,
-            'quality' => 'medium'
-        ]);
-    });
-
-    Route::get('/websocket-url', function () {
-        // Return WebSocket URL for streaming
-        $wsUrl = config('app.websocket_url', 'ws://localhost:6001');
-
-        return response()->json([
-            'websocket_url' => $wsUrl
-        ]);
-    });
+    return response()->json([
+        'success' => true,
+        'message' => 'System stats received'
+    ]);
 });
 
 // Protected routes (with Sanctum authentication)
@@ -104,6 +90,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
-    // Add protected admin routes here if needed
 });

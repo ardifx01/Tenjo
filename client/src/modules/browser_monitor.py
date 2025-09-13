@@ -44,18 +44,18 @@ class BrowserMonitor:
         self.browser_processes = {}
         self.active_tabs = {}
         self.check_interval = 5  # seconds
-        
+
         # Browser process names
         self.browser_names = [
             'chrome.exe', 'firefox.exe', 'msedge.exe', 'opera.exe', 'safari.exe',
             'Chrome', 'Firefox', 'Safari', 'Opera', 'Microsoft Edge'
         ]
-        
+
     def start_monitoring(self):
         """Start browser monitoring"""
         self.is_running = True
         logging.info("Browser monitoring started")
-        
+
         while self.is_running:
             try:
                 self.monitor_browsers()
@@ -63,14 +63,14 @@ class BrowserMonitor:
             except Exception as e:
                 logging.error(f"Browser monitoring error: {str(e)}")
                 time.sleep(5)
-                
+
     def monitor_browsers(self):
         """Monitor browser activities"""
         current_time = datetime.now()
-        
+
         # Get all running processes
         current_browsers = self.get_browser_processes()
-        
+
         # Check for new browser sessions
         for browser_name, processes in current_browsers.items():
             if browser_name not in self.browser_processes:
@@ -80,28 +80,28 @@ class BrowserMonitor:
                     'processes': processes,
                     'urls': {}
                 }
-                
+
                 self.send_browser_event('browser_started', browser_name, current_time)
-                
+
         # Check for closed browsers
         for browser_name in list(self.browser_processes.keys()):
             if browser_name not in current_browsers:
                 # Browser closed
                 end_time = current_time
                 start_time = self.browser_processes[browser_name]['start_time']
-                
+
                 self.send_browser_event('browser_closed', browser_name, end_time, start_time)
                 del self.browser_processes[browser_name]
-                
+
         # Monitor active windows and URLs (simplified)
         active_window = self.get_active_window()
         if active_window and self.is_browser_window(active_window):
             self.monitor_browser_urls(active_window)
-            
+
     def get_browser_processes(self):
         """Get all running browser processes"""
         browsers = {}
-        
+
         try:
             for proc in psutil.process_iter(['pid', 'name']):
                 proc_name = proc.info['name']
@@ -112,9 +112,9 @@ class BrowserMonitor:
                     browsers[browser_key].append(proc.info['pid'])
         except Exception as e:
             logging.error(f"Error getting browser processes: {str(e)}")
-            
+
         return browsers
-        
+
     def get_active_window(self):
         """Get active window information"""
         try:
@@ -125,7 +125,7 @@ class BrowserMonitor:
         except Exception as e:
             logging.error(f"Error getting active window: {str(e)}")
             return None
-            
+
     def get_active_window_windows(self):
         """Get active window on Windows"""
         if not WINDOWS_AVAILABLE or not win32gui:
@@ -141,7 +141,7 @@ class BrowserMonitor:
             except Exception:
                 pass
             return None
-            
+
         try:
             hwnd = win32gui.GetForegroundWindow()
             window_title = win32gui.GetWindowText(hwnd)
@@ -162,12 +162,12 @@ class BrowserMonitor:
             except Exception:
                 pass
         return None
-        
+
     def get_active_window_macos(self):
         """Get active window on macOS"""
         if not MACOS_AVAILABLE or not NSWorkspace:
             return None
-            
+
         try:
             active_app = NSWorkspace.sharedWorkspace().activeApplication()
             return {
@@ -177,65 +177,65 @@ class BrowserMonitor:
         except Exception as e:
             logging.error(f"Error getting macOS active window: {str(e)}")
             return None
-            
+
     def is_browser_window(self, window_info):
         """Check if window belongs to a browser"""
         if not window_info:
             return False
-            
+
         title = window_info.get('title', '').lower()
         return any(browser.lower() in title for browser in ['chrome', 'firefox', 'safari', 'edge', 'opera'])
-        
+
     def monitor_browser_urls(self, window_info):
         """Monitor URLs in browser (simplified approach)"""
         # Note: Actual URL extraction requires more advanced techniques
         # This is a simplified version that tracks window titles
-        
+
         window_title = window_info.get('title', '')
         current_time = datetime.now()
-        
+
         # Extract URL from window title (basic approach)
         url = self.extract_url_from_title(window_title)
-        
+
         if url and url != self.active_tabs.get('current_url'):
             # URL changed
             if 'current_url' in self.active_tabs:
                 # Send end time for previous URL
-                self.send_url_event('url_closed', self.active_tabs['current_url'], 
+                self.send_url_event('url_closed', self.active_tabs['current_url'],
                                   current_time, self.active_tabs.get('start_time'))
-            
+
             # Start tracking new URL
             self.active_tabs = {
                 'current_url': url,
                 'start_time': current_time
             }
-            
+
             self.send_url_event('url_opened', url, current_time)
-            
+
     def extract_url_from_title(self, title):
         """Extract URL from browser window title"""
         # Basic URL extraction from window title
         # This is a simplified approach - real implementation would need browser-specific APIs
-        
+
         if not title:
             return None
-            
+
         # Look for URL patterns in title
         import re
         url_pattern = r'https?://[^\s]+'
         urls = re.findall(url_pattern, title)
-        
+
         if urls:
             return urls[0]
-            
+
         # If no direct URL, use domain extraction
         if ' - ' in title:
             parts = title.split(' - ')
             if len(parts) >= 2:
                 return parts[-1]  # Usually browser name is at the end
-                
+
         return title
-        
+
     def normalize_browser_name(self, proc_name):
         """Normalize browser process name"""
         name_mapping = {
@@ -250,54 +250,112 @@ class BrowserMonitor:
             'opera.exe': 'Opera',
             'Opera': 'Opera'
         }
-        
+
         for key, value in name_mapping.items():
             if key.lower() in proc_name.lower():
                 return value
-                
+
         return proc_name
-        
+
     def send_browser_event(self, event_type, browser_name, timestamp, start_time=None):
         """Send browser event to server"""
+        from datetime import datetime
+        
+        # Handle timestamp parameter - can be string, datetime, or float
+        if isinstance(timestamp, str):
+            formatted_timestamp = timestamp
+        elif isinstance(timestamp, (int, float)):
+            formatted_timestamp = datetime.fromtimestamp(timestamp).isoformat()
+        else:
+            formatted_timestamp = timestamp.isoformat()
+            
         data = {
             'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'browser_name': browser_name,
-            'timestamp': timestamp.isoformat(),
+            'timestamp': formatted_timestamp,
         }
-        
+
         if start_time:
-            data['start_time'] = start_time.isoformat()
-            data['duration'] = (timestamp - start_time).total_seconds()
-            
-        self.api_client.post('/api/browser-events', data)
-        
+            if isinstance(start_time, str):
+                data['start_time'] = start_time
+            elif isinstance(start_time, (int, float)):
+                data['start_time'] = datetime.fromtimestamp(start_time).isoformat()
+            else:
+                data['start_time'] = start_time.isoformat()
+                
+            if not isinstance(timestamp, str) and not isinstance(start_time, str):
+                try:
+                    data['duration'] = int((timestamp - start_time).total_seconds())
+                except:
+                    data['duration'] = 0
+            else:
+                data['duration'] = 0
+
+        try:
+            response = self.api_client.post('/api/browser-events', data)
+            if not response:
+                logging.error(f"Failed to send browser event: {event_type} for {browser_name}")
+            else:
+                logging.debug(f"Browser event sent successfully: {event_type} for {browser_name}")
+        except Exception as e:
+            logging.error(f"Error sending browser event: {str(e)}")
+
     def send_url_event(self, event_type, url, timestamp, start_time=None):
         """Send URL event to server"""
+        from datetime import datetime
+        
+        # Handle timestamp parameter - can be string, datetime, or float
+        if isinstance(timestamp, str):
+            formatted_timestamp = timestamp
+        elif isinstance(timestamp, (int, float)):
+            formatted_timestamp = datetime.fromtimestamp(timestamp).isoformat()
+        else:
+            formatted_timestamp = timestamp.isoformat()
+            
         data = {
             'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'url': url,
-            'timestamp': timestamp.isoformat(),
+            'timestamp': formatted_timestamp,
         }
-        
+
         if start_time:
-            data['start_time'] = start_time.isoformat()
-            data['duration'] = (timestamp - start_time).total_seconds()
-            
-        self.api_client.post('/api/url-events', data)
-        
+            if isinstance(start_time, str):
+                data['start_time'] = start_time
+            elif isinstance(start_time, (int, float)):
+                data['start_time'] = datetime.fromtimestamp(start_time).isoformat()
+            else:
+                data['start_time'] = start_time.isoformat()
+                
+            if not isinstance(timestamp, str) and not isinstance(start_time, str):
+                try:
+                    data['duration'] = int((timestamp - start_time).total_seconds())
+                except:
+                    data['duration'] = 0
+            else:
+                data['duration'] = 0
+
+        try:
+            response = self.api_client.post('/api/url-events', data)
+            if not response:
+                logging.error(f"Failed to send URL event: {event_type} for {url}")
+            else:
+                logging.debug(f"URL event sent successfully: {event_type} for {url}")
+        except Exception as e:
+            logging.error(f"Error sending URL event: {str(e)}")
+
     def stop_monitoring(self):
         """Stop browser monitoring"""
         self.is_running = False
         logging.info("Browser monitoring stopped")
-        
+
     def get_browser_info(self):
         """Get current browser information for testing"""
         try:
             browser_data = []
             processes = self.get_browser_processes()
-            
+
             for process_name, process_info in processes.items():
                 browser_data.append({
                     'process_name': process_name,
@@ -305,7 +363,7 @@ class BrowserMonitor:
                     'active': True,
                     'timestamp': datetime.now().isoformat()
                 })
-            
+
             return browser_data
         except Exception as e:
             logging.error(f"Error getting browser info: {e}")

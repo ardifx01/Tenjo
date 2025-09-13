@@ -374,7 +374,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification - Dynamic generation\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib\n        # Get unique identifiers",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib\n        # Get unique identifiers",
         "detail": "client.src.core.config",
         "documentation": {}
     },
@@ -439,6 +439,33 @@
         "description": "client.src.utils.stealth",
         "peekOfCode": "class StealthManager:\n    def __init__(self):\n        self.system = platform.system()\n        self.hidden_dir = self.get_hidden_directory()\n    def get_hidden_directory(self):\n        \"\"\"Get or create hidden directory\"\"\"\n        if self.system == 'Windows':\n            hidden_dir = os.path.join(os.getenv('APPDATA'), '.system_cache')\n        else:\n            hidden_dir = os.path.join(os.path.expanduser('~'), '.system_cache')",
         "detail": "client.src.utils.stealth",
+        "documentation": {}
+    },
+    {
+        "label": "test_simple_request",
+        "kind": 2,
+        "importPath": "client.debug_api",
+        "description": "client.debug_api",
+        "peekOfCode": "def test_simple_request():\n    \"\"\"Test simple request without any headers\"\"\"\n    try:\n        response = requests.get('http://localhost:8003/api/health', timeout=10)\n        print(f\"✅ Simple request: {response.status_code} - {response.text}\")\n        return True\n    except Exception as e:\n        print(f\"❌ Simple request failed: {e}\")\n        return False\ndef test_with_headers():",
+        "detail": "client.debug_api",
+        "documentation": {}
+    },
+    {
+        "label": "test_with_headers",
+        "kind": 2,
+        "importPath": "client.debug_api",
+        "description": "client.debug_api",
+        "peekOfCode": "def test_with_headers():\n    \"\"\"Test with API client headers\"\"\"\n    try:\n        headers = {\n            'Authorization': 'Bearer dummy-key',\n            'Content-Type': 'application/json',\n            'User-Agent': 'Tenjo-Client/1.0'\n        }\n        response = requests.get('http://localhost:8003/api/health', headers=headers, timeout=10)\n        print(f\"✅ With headers: {response.status_code} - {response.text}\")",
+        "detail": "client.debug_api",
+        "documentation": {}
+    },
+    {
+        "label": "test_api_client",
+        "kind": 2,
+        "importPath": "client.debug_api",
+        "description": "client.debug_api",
+        "peekOfCode": "def test_api_client():\n    \"\"\"Test actual API client\"\"\"\n    try:\n        sys.path.append('/Users/yapi/Adi/App-Dev/Tenjo/client')\n        from src.utils.api_client import APIClient\n        from src.core.config import Config\n        client = APIClient(Config.SERVER_URL, 'dummy-key')\n        result = client.get('/api/health')\n        print(f\"✅ API Client: {result}\")\n        return True",
+        "detail": "client.debug_api",
         "documentation": {}
     },
     {

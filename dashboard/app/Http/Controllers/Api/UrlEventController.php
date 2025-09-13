@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ClientValidation;
 use App\Models\Client;
 use App\Models\UrlEvent;
 use Illuminate\Http\Request;
@@ -10,25 +11,22 @@ use Illuminate\Http\JsonResponse;
 
 class UrlEventController extends Controller
 {
+    use ClientValidation;
+
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'client_id' => 'required|string',
+        $validationRules = array_merge($this->getCommonEventValidationRules(), [
             'event_type' => 'required|string|in:url_opened,url_closed',
             'url' => 'required|string',
-            'timestamp' => 'required|date',
-            'start_time' => 'date',
-            'duration' => 'integer|min:0',
             'page_title' => 'string|max:500'
         ]);
 
-        $client = Client::where('client_id', $request->client_id)->first();
+        $request->validate($validationRules);
 
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found'
-            ], 404);
+        $client = $this->validateAndGetClient($request);
+
+        if ($this->clientValidationFailed($client)) {
+            return $client; // Return the error response
         }
 
         try {
@@ -76,31 +74,12 @@ class UrlEventController extends Controller
     {
         $query = UrlEvent::with('client');
 
-        // Filter by client
-        if ($request->has('client_id')) {
-            $client = Client::where('client_id', $request->client_id)->first();
-            if ($client) {
-                $query->where('client_id', $client->id);
-            }
-        }
+        // Apply common filters (client_id, event_type, date range)
+        $query = $this->applyCommonFilters($query, $request);
 
-        // Filter by URL/domain
+        // Filter by URL/domain (specific to URL events)
         if ($request->has('url')) {
             $query->where('url', 'like', '%' . $request->url . '%');
-        }
-
-        // Filter by event type
-        if ($request->has('event_type')) {
-            $query->where('event_type', $request->event_type);
-        }
-
-        // Filter by date range
-        if ($request->has('from')) {
-            $query->where('start_time', '>=', $request->from);
-        }
-
-        if ($request->has('to')) {
-            $query->where('start_time', '<=', $request->to);
         }
 
         $urlEvents = $query->orderBy('start_time', 'desc')
