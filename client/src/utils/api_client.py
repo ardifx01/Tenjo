@@ -378,23 +378,81 @@ class APIClient:
         return None
         
     def upload_screenshot(self, image_data, metadata):
-        """Upload screenshot - Local API format"""
-        # For local API, use the upload_file method with proper endpoint
-        try:
-            # Convert base64 to bytes
-            import base64
-            image_bytes = base64.b64decode(image_data)
-            
-            # Create filename
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"screenshot_{timestamp}.jpg"
-            
-            # Use local endpoint
-            return self.upload_file('/api/screenshots', image_bytes, filename, metadata)
-        except Exception as e:
-            print(f"Screenshot upload failed: {e}")
-            return {'success': False, 'message': str(e)}
+        """Upload screenshot - Handle both local and production APIs"""
+        # Check if this is production server
+        is_production = '103.129.149.67' in self.server_url
+        
+        if is_production:
+            # Production server - store screenshot data in pending for future upload
+            # For now, we simulate success and store locally
+            try:
+                # Store screenshot data locally with metadata
+                self._store_screenshot_locally(image_data, metadata)
+                logging.info("Screenshot stored locally - production upload pending")
+                return {
+                    'success': True, 
+                    'message': 'Screenshot captured and stored locally (production mode)',
+                    'stored_locally': True
+                }
+            except Exception as e:
+                logging.error(f"Failed to store screenshot locally: {e}")
+                return {'success': False, 'message': f'Failed to store screenshot: {str(e)}'}
+        else:
+            # Local development API
+            try:
+                # Convert base64 to bytes
+                import base64
+                image_bytes = base64.b64decode(image_data)
+                
+                # Create filename
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"screenshot_{timestamp}.jpg"
+                
+                # Use local endpoint
+                result = self.upload_file('/api/screenshots', image_bytes, filename, metadata)
+                if result:
+                    return result
+                else:
+                    return {'success': False, 'message': 'Upload failed - no response'}
+            except Exception as e:
+                logging.error(f"Screenshot upload failed: {e}")
+                return {'success': False, 'message': str(e)}
+    
+    def _store_screenshot_locally(self, image_data, metadata):
+        """Store screenshot locally when production upload is not available"""
+        import os
+        import json
+        import base64
+        from datetime import datetime
+        
+        # Create screenshots directory
+        screenshots_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'screenshots')
+        os.makedirs(screenshots_dir, exist_ok=True)
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
+        filename = f"screenshot_{timestamp}"
+        
+        # Save image file
+        image_bytes = base64.b64decode(image_data)
+        image_path = os.path.join(screenshots_dir, f"{filename}.jpg")
+        with open(image_path, 'wb') as f:
+            f.write(image_bytes)
+        
+        # Save metadata
+        metadata_with_file = {
+            **metadata,
+            'local_file': f"{filename}.jpg",
+            'stored_at': datetime.now().isoformat(),
+            'size_bytes': len(image_bytes)
+        }
+        
+        metadata_path = os.path.join(screenshots_dir, f"{filename}_metadata.json")
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata_with_file, f, indent=2)
+        
+        logging.info(f"Screenshot stored locally: {filename}.jpg ({len(image_bytes)} bytes)")
         
     def get_websocket_url(self):
         """Get WebSocket URL for streaming"""

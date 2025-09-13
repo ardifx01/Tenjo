@@ -12,6 +12,19 @@ import logging
 import signal
 import platform
 
+# Check for macOS-specific dependencies
+if platform.system() == 'Darwin':
+    try:
+        import AppKit
+        import Quartz
+        MACOS_MODULES_AVAILABLE = True
+    except ImportError:
+        MACOS_MODULES_AVAILABLE = False
+        # Only warn once at startup, not repeatedly
+        logging.warning("macOS-specific modules not available (install pyobjc for full functionality)")
+else:
+    MACOS_MODULES_AVAILABLE = True
+
 # Import modules
 from src.core.config import Config
 from src.modules.screen_capture import ScreenCapture
