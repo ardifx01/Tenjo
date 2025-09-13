@@ -14,6 +14,9 @@ class APIClient:
         self.client_id = None
         self.session = requests.Session()
         
+        # Cache for missing endpoints to avoid spam warnings
+        self._missing_endpoints = set()
+        
         # Set default headers
         self.session.headers.update({
             'Authorization': f'Bearer {api_key}',
@@ -38,7 +41,10 @@ class APIClient:
             except Exception as e:
                 # If endpoint doesn't exist on local, that's normal for development
                 if endpoint in ['/api/browser-events', '/api/process-events', '/api/system-stats', '/api/url-events']:
-                    logging.warning(f"API endpoint not found: {endpoint}")
+                    # Only log warning once per endpoint
+                    if endpoint not in self._missing_endpoints:
+                        logging.warning(f"API endpoint not implemented yet: {endpoint}")
+                        self._missing_endpoints.add(endpoint)
                     self._store_pending_data(endpoint, data)
                     return {'success': False, 'message': 'Endpoint not implemented yet in local development'}
                 else:
@@ -46,7 +52,10 @@ class APIClient:
         
         # For production server, check known missing endpoints
         if endpoint in ['/api/browser-events', '/api/process-events', '/api/system-stats', '/api/url-events']:
-            logging.warning(f"API endpoint not found: {endpoint}")
+            # Only log warning once per endpoint
+            if endpoint not in self._missing_endpoints:
+                logging.warning(f"API endpoint not available on production: {endpoint}")
+                self._missing_endpoints.add(endpoint)
             # Store data locally for future use when endpoint is available
             self._store_pending_data(endpoint, data)
             return {'success': False, 'message': 'Endpoint not available on production server'}
@@ -295,13 +304,53 @@ class APIClient:
         
     def register_client(self, client_info):
         """Register client with the server."""
-        # Use local API format (not production)
-        try:
-            response = self.post('/api/clients/register', client_info)
-            return response
-        except Exception as e:
-            print(f"Registration failed: {e}")
-            raise
+        # Check if this is production server
+        is_production = '103.129.149.67' in self.server_url
+        
+        if is_production:
+            # Production API expects specific format
+            production_data = {
+                'client_id': client_info.get('client_id'),
+                'hostname': client_info.get('hostname'),
+                'ip_address': client_info.get('ip_address'),
+                'user': client_info.get('username', client_info.get('user')),
+                'timezone': client_info.get('timezone')
+            }
+            
+            # Convert os_info to array format expected by production
+            os_info = client_info.get('os_info', client_info.get('os'))
+            if isinstance(os_info, dict):
+                # Convert dict to array: [name, version]
+                production_data['os'] = [
+                    os_info.get('name', ''),
+                    os_info.get('version', '')
+                ]
+            elif isinstance(os_info, str):
+                # Convert string to array by splitting
+                parts = os_info.split(' ', 1)
+                production_data['os'] = parts if len(parts) == 2 else [os_info, '']
+            else:
+                production_data['os'] = ['Unknown', '']
+            
+            # Use production headers
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+            
+            try:
+                return self._make_request_with_headers('POST', '/api/clients/register', production_data, headers)
+            except Exception as e:
+                print(f"Production registration failed: {e}")
+                raise
+        else:
+            # Local development server
+            try:
+                return self._make_request('POST', '/api/clients/register', client_info)
+            except Exception as e:
+                print(f"Registration failed: {e}")
+                raise
         
     def send_process_data(self, process_data):
         """Send process monitoring data"""

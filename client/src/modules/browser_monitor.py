@@ -13,6 +13,9 @@ import psutil
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from core.config import Config
 
+# Global flag to track if we've already warned about missing modules
+_modules_warning_shown = False
+
 if platform.system() == 'Windows':
     try:
         import pygetwindow as gw
@@ -24,7 +27,9 @@ if platform.system() == 'Windows':
         gw = None
         win32gui = None
         win32process = None
-        logging.warning("Windows-specific modules not available")
+        if not _modules_warning_shown:
+            logging.warning("Windows-specific modules not available")
+            _modules_warning_shown = True
 elif platform.system() == 'Darwin':
     try:
         from AppKit import NSWorkspace
@@ -34,11 +39,15 @@ elif platform.system() == 'Darwin':
         MACOS_AVAILABLE = False
         NSWorkspace = None
         Quartz = None
-        logging.warning("macOS-specific modules not available")
+        if not _modules_warning_shown:
+            logging.warning("macOS-specific modules not available (install pyobjc for full functionality)")
+            _modules_warning_shown = True
 else:
     WINDOWS_AVAILABLE = False
     MACOS_AVAILABLE = False
-    logging.info("Platform-specific window modules not needed")
+    if not _modules_warning_shown:
+        logging.info("Platform-specific window modules not needed")
+        _modules_warning_shown = True
 
 class BrowserMonitor:
     def __init__(self, api_client):
