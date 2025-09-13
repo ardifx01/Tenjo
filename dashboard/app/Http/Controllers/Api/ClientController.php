@@ -11,6 +11,7 @@ use App\Models\UrlEvent;
 use App\Models\Screenshot;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ClientController extends Controller
@@ -18,46 +19,86 @@ class ClientController extends Controller
     use ClientValidation;
     public function register(Request $request): JsonResponse
     {
-        $request->validate([
-            'client_id' => 'required|string|max:255',
-            'hostname' => 'required|string|max:255',
-            'ip_address' => 'required|ip',
-            'username' => 'required|string|max:255',
-            'os_info' => 'required|array',
-            'timezone' => 'string|max:100'
-        ]);
+        try {
+            $request->validate([
+                'client_id' => 'required|string|max:255',
+                'hostname' => 'required|string|max:255',
+                'ip_address' => 'required|ip',
+                'username' => 'required|string|max:255',
+                'os_info' => 'required|array',
+                'timezone' => 'string|max:100'
+            ]);
 
-        // Check if client already exists by client_id
-        $existingClient = Client::where('client_id', $request->client_id)->first();
+            // Check if client already exists by client_id
+            $existingClient = Client::where('client_id', $request->client_id)->first();
 
-        if ($existingClient) {
-            $existingClient->updateLastSeen();
+            if ($existingClient) {
+                $existingClient->updateLastSeen();
+
+                Log::info('Client registration - existing client', [
+                    'client_id' => $existingClient->client_id,
+                    'ip_address' => $request->ip_address,
+                    'hostname' => $request->hostname
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'client_id' => $existingClient->client_id,
+                    'message' => 'Client already registered'
+                ]);
+            }
+
+            // Create new client with provided client_id
+            $client = Client::create([
+                'client_id' => $request->client_id,
+                'hostname' => $request->hostname,
+                'ip_address' => $request->ip_address,
+                'username' => $request->username,
+                'os_info' => $request->os_info,
+                'status' => 'active',
+                'first_seen' => now(),  // Fixed: use first_seen instead of first_seen_at
+                'last_seen' => now(),   // Fixed: use last_seen instead of last_seen_at
+                'timezone' => $request->timezone ?? 'Asia/Jakarta'
+            ]);
+
+            Log::info('Client registration - new client created', [
+                'client_id' => $client->client_id,
+                'ip_address' => $client->ip_address,
+                'hostname' => $client->hostname,
+                'username' => $client->username
+            ]);
 
             return response()->json([
                 'success' => true,
-                'client_id' => $existingClient->client_id,
-                'message' => 'Client already registered'
+                'client_id' => $client->client_id,
+                'message' => 'Client registered successfully'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Client registration validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->except(['os_info'])  // Don't log full os_info for security
             ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Client registration failed', [
+                'error' => $e->getMessage(),
+                'client_id' => $request->client_id ?? 'unknown',
+                'ip_address' => $request->ip_address ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration failed: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Create new client with provided client_id
-        $client = Client::create([
-            'client_id' => $request->client_id,
-            'hostname' => $request->hostname,
-            'ip_address' => $request->ip_address,
-            'username' => $request->username,
-            'os_info' => $request->os_info,
-            'status' => 'active',
-            'first_seen_at' => now(),
-            'last_seen_at' => now(),
-            'timezone' => $request->timezone ?? 'Asia/Jakarta'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'client_id' => $client->client_id,
-            'message' => 'Client registered successfully'
-        ], 201);
     }
 
     public function heartbeat(Request $request): JsonResponse

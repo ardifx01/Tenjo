@@ -9,6 +9,7 @@ use App\Models\Screenshot;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ScreenshotController extends Controller
@@ -32,27 +33,68 @@ class ScreenshotController extends Controller
         }
 
         try {
-            // Decode base64 image
-            $imageData = base64_decode($request->image_data);
+            // Clean and decode base64 image
+            $imageDataRaw = $request->image_data;
 
-            if (!$imageData) {
+            // Remove data URL prefix if present (data:image/jpeg;base64,)
+            if (strpos($imageDataRaw, ',') !== false) {
+                $imageDataRaw = explode(',', $imageDataRaw)[1];
+            }
+
+            // Clean any whitespace
+            $imageDataRaw = trim($imageDataRaw);
+
+            // Validate base64
+            if (!base64_decode($imageDataRaw, true)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid image data'
+                    'message' => 'Invalid base64 image data'
                 ], 400);
             }
 
-            // Generate filename
+            $imageData = base64_decode($imageDataRaw);
+
+            if (!$imageData || strlen($imageData) < 100) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or corrupted image data'
+                ], 400);
+            }
+
+            // Validate image format by checking header
+            $imageType = $this->getImageType($imageData);
+            if (!$imageType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unsupported image format'
+                ], 400);
+            }
+
+            // Generate filename with proper extension
             $filename = sprintf(
-                '%s_%s_%d.jpg',
+                '%s_%s_%d.%s',
                 $client->client_id,
                 date('Y-m-d_H-i-s', strtotime($request->timestamp)),
-                $request->monitor ?? 1
+                $request->monitor ?? 1,
+                $imageType
             );
 
+            // Ensure screenshots directory exists
+            $directory = 'screenshots';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+
             // Store image
-            $path = 'screenshots/' . $filename;
-            Storage::disk('public')->put($path, $imageData);
+            $path = $directory . '/' . $filename;
+            $stored = Storage::disk('public')->put($path, $imageData);
+
+            if (!$stored) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store image file'
+                ], 500);
+            }
 
             // Create screenshot record
             $screenshot = Screenshot::create([
@@ -71,15 +113,58 @@ class ScreenshotController extends Controller
             return response()->json([
                 'success' => true,
                 'screenshot_id' => $screenshot->id,
+                'file_size' => strlen($imageData),
+                'file_path' => $path,
                 'message' => 'Screenshot uploaded successfully'
             ], 201);
 
         } catch (\Exception $e) {
+            Log::error('Screenshot upload failed', [
+                'client_id' => $request->client_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to upload screenshot: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Detect image type from binary data
+     */
+    private function getImageType($imageData): ?string
+    {
+        $header = substr($imageData, 0, 12);
+
+        // JPEG
+        if (substr($header, 0, 3) === "\xFF\xD8\xFF") {
+            return 'jpg';
+        }
+
+        // PNG
+        if (substr($header, 0, 8) === "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A") {
+            return 'png';
+        }
+
+        // GIF
+        if (substr($header, 0, 6) === "GIF87a" || substr($header, 0, 6) === "GIF89a") {
+            return 'gif';
+        }
+
+        // WebP
+        if (substr($header, 0, 4) === "RIFF" && substr($header, 8, 4) === "WEBP") {
+            return 'webp';
+        }
+
+        // BMP
+        if (substr($header, 0, 2) === "BM") {
+            return 'bmp';
+        }
+
+        return null;
     }
 
     public function upload(Request $request): JsonResponse

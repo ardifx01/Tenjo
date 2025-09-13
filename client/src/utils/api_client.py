@@ -16,43 +16,45 @@ class APIClient:
         self.api_key = api_key
         self.client_id = None
         self.session = requests.Session()
-        
+
         # Cache for missing endpoints to avoid spam warnings
         self._missing_endpoints = set()
-        
+
         # Set default headers
         self.session.headers.update({
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
             'User-Agent': 'Tenjo-Client/1.0'
         })
-        
+
         # Connection settings
         self.timeout = 30
         self.max_retries = 3
         self.retry_delay = 5
-        
+
     def get_real_ip_address(self):
-        """Auto-detect the real IP address of the client."""
+        """Auto-detect the real IP address of the client with improved reliability."""
+        detected_ips = []
+
         try:
             # Method 1: Try to get IP by connecting to a remote server
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 # Connect to Google DNS (doesn't actually send data)
                 s.connect(("8.8.8.8", 80))
                 local_ip = s.getsockname()[0]
-                
+
             # Validate the IP is not localhost or link-local
             if local_ip and local_ip != "127.0.0.1" and not local_ip.startswith("169.254"):
+                detected_ips.append(local_ip)
                 logging.info(f"Detected local IP via socket method: {local_ip}")
-                return local_ip
-                
+
         except Exception as e:
             logging.debug(f"Socket method failed: {e}")
-            
+
         try:
-            # Method 2: Try using system commands
+            # Method 2: Try using system commands with better parsing
             system = platform.system().lower()
-            
+
             if system == "windows":
                 # Windows: Use ipconfig
                 result = subprocess.run(
@@ -61,21 +63,27 @@ class APIClient:
                     text=True,
                     timeout=10
                 )
-                
-                for line in result.stdout.split('\n'):
-                    if 'IPv4 Address' in line and '192.168.' in line:
-                        ip = line.split(':')[-1].strip()
-                        if ip and ip != "127.0.0.1":
+
+                import re
+                ip_pattern = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                matches = re.findall(ip_pattern, result.stdout)
+
+                for ip in matches:
+                    if (ip.startswith('192.168.') or
+                        ip.startswith('10.') or
+                        (ip.startswith('172.') and int(ip.split('.')[1]) >= 16 and int(ip.split('.')[1]) <= 31)):
+                        if ip not in detected_ips:
+                            detected_ips.append(ip)
                             logging.info(f"Detected IP via ipconfig: {ip}")
-                            return ip
-                            
+
             elif system in ["darwin", "linux"]:
-                # macOS/Linux: Use ifconfig or ip command
+                # macOS/Linux: Use multiple methods
                 commands = [
                     ["ifconfig"],
-                    ["ip", "addr", "show"]
+                    ["ip", "addr", "show"],
+                    ["ip", "route", "get", "8.8.8.8"]
                 ]
-                
+
                 for cmd in commands:
                     try:
                         result = subprocess.run(
@@ -84,69 +92,108 @@ class APIClient:
                             text=True,
                             timeout=10
                         )
-                        
-                        # Look for common private IP ranges
-                        for line in result.stdout.split('\n'):
-                            # Match IPv4 addresses
-                            import re
-                            ip_pattern = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-                            matches = re.findall(ip_pattern, line)
-                            
-                            for ip in matches:
-                                # Check if it's a valid private IP
-                                if (ip.startswith('192.168.') or 
-                                    ip.startswith('10.') or 
-                                    ip.startswith('172.')):
+
+                        # Look for common private IP ranges with better regex
+                        import re
+                        ip_pattern = r'inet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|src\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                        matches = re.findall(ip_pattern, result.stdout)
+
+                        for match in matches:
+                            ip = match[0] or match[1]  # Get non-empty group
+                            if ip and self._is_valid_private_ip(ip):
+                                if ip not in detected_ips:
+                                    detected_ips.append(ip)
                                     logging.info(f"Detected IP via {cmd[0]}: {ip}")
-                                    return ip
                     except Exception:
                         continue
-                        
+
         except Exception as e:
             logging.debug(f"System command method failed: {e}")
-            
+
         try:
             # Method 3: Try to get hostname IP
             hostname = socket.gethostname()
             ip = socket.gethostbyname(hostname)
-            
-            if ip and ip != "127.0.0.1" and not ip.startswith("169.254"):
-                logging.info(f"Detected IP via hostname resolution: {ip}")
-                return ip
-                
+
+            if ip and self._is_valid_private_ip(ip):
+                if ip not in detected_ips:
+                    detected_ips.append(ip)
+                    logging.info(f"Detected IP via hostname resolution: {ip}")
+
         except Exception as e:
             logging.debug(f"Hostname resolution failed: {e}")
-            
+
         # Method 4: Fallback - try to get any network interface
         try:
             import netifaces
             for interface in netifaces.interfaces():
+                if interface.startswith('lo'):  # Skip loopback
+                    continue
+
                 addrs = netifaces.ifaddresses(interface)
                 if netifaces.AF_INET in addrs:
                     for addr_info in addrs[netifaces.AF_INET]:
                         ip = addr_info.get('addr')
-                        if (ip and ip != "127.0.0.1" and 
-                            not ip.startswith("169.254") and
-                            (ip.startswith('192.168.') or 
-                             ip.startswith('10.') or 
-                             ip.startswith('172.'))):
-                            logging.info(f"Detected IP via netifaces: {ip}")
-                            return ip
+                        if ip and self._is_valid_private_ip(ip):
+                            if ip not in detected_ips:
+                                detected_ips.append(ip)
+                                logging.info(f"Detected IP via netifaces ({interface}): {ip}")
         except ImportError:
             # netifaces not available
             pass
         except Exception as e:
             logging.debug(f"Netifaces method failed: {e}")
-            
+
+        # Return the best IP (prefer 192.168.x.x, then 10.x.x.x, then 172.x.x.x)
+        if detected_ips:
+            # Sort by preference
+            for ip in detected_ips:
+                if ip.startswith('192.168.'):
+                    logging.info(f"Selected best IP: {ip}")
+                    return ip
+            for ip in detected_ips:
+                if ip.startswith('10.'):
+                    logging.info(f"Selected best IP: {ip}")
+                    return ip
+            # Return first available
+            logging.info(f"Selected available IP: {detected_ips[0]}")
+            return detected_ips[0]
+
         # Final fallback
         logging.warning("Could not auto-detect IP address, using fallback")
         return "192.168.1.100"  # Generic fallback
-        
+
+    def _is_valid_private_ip(self, ip):
+        """Check if IP is a valid private IP address"""
+        if not ip or ip == "127.0.0.1" or ip.startswith("169.254"):
+            return False
+
+        parts = ip.split('.')
+        if len(parts) != 4:
+            return False
+
+        try:
+            first = int(parts[0])
+            second = int(parts[1])
+
+            # Check private ranges
+            if first == 192 and second == 168:
+                return True
+            if first == 10:
+                return True
+            if first == 172 and 16 <= second <= 31:
+                return True
+
+        except ValueError:
+            return False
+
+        return False
+
     def post(self, endpoint, data):
         """Send POST request to API"""
         # Check if this is local development server
         is_local = '127.0.0.1' in self.server_url or 'localhost' in self.server_url
-        
+
         # For local server, try the endpoint first
         if is_local:
             try:
@@ -162,7 +209,7 @@ class APIClient:
                     return {'success': False, 'message': 'Endpoint not implemented yet in local development'}
                 else:
                     raise e
-        
+
         # For production server, check known missing endpoints
         if endpoint in ['/api/browser-events', '/api/process-events', '/api/system-stats', '/api/url-events']:
             # Only log warning once per endpoint
@@ -172,7 +219,7 @@ class APIClient:
             # Store data locally for future use when endpoint is available
             self._store_pending_data(endpoint, data)
             return {'success': False, 'message': 'Endpoint not available on production server'}
-        
+
         # Add production headers for JSON endpoints
         if endpoint in ['/api/clients/register', '/api/clients/heartbeat']:
             headers = {
@@ -186,23 +233,23 @@ class APIClient:
             return self.upload_screenshot(data)
         else:
             return self._make_request('POST', endpoint, data)
-        
+
     def get(self, endpoint, params=None):
         """Send GET request to API"""
         return self._make_request('GET', endpoint, params=params)
-        
+
     def put(self, endpoint, data):
         """Send PUT request to API"""
         return self._make_request('PUT', endpoint, data)
-        
+
     def delete(self, endpoint):
         """Send DELETE request to API"""
         return self._make_request('DELETE', endpoint)
-        
+
     def _make_request(self, method, endpoint, data=None, params=None):
         """Make HTTP request with retry logic"""
         url = f"{self.server_url}{endpoint}"
-        
+
         for attempt in range(self.max_retries):
             try:
                 if method == 'GET':
@@ -215,7 +262,7 @@ class APIClient:
                     response = self.session.delete(url, timeout=self.timeout)
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
-                
+
                 # Check response status
                 if response.status_code == 200 or response.status_code == 201:
                     try:
@@ -230,38 +277,38 @@ class APIClient:
                     return None
                 else:
                     logging.warning(f"API request failed with status {response.status_code}")
-                    
+
             except requests.exceptions.ConnectionError:
                 logging.warning(f"Connection error on attempt {attempt + 1}")
             except requests.exceptions.Timeout:
                 logging.warning(f"Request timeout on attempt {attempt + 1}")
             except Exception as e:
                 logging.error(f"Request error: {str(e)}")
-                
+
             # Wait before retry
             if attempt < self.max_retries - 1:
                 time.sleep(self.retry_delay)
-                
+
         logging.error(f"Failed to complete {method} request to {endpoint} after {self.max_retries} attempts")
         # Raise exception instead of returning None for better error handling
         raise Exception(f"API request failed: {method} {endpoint} after {self.max_retries} attempts")
-    
+
     def _make_request_with_headers(self, method, endpoint, data=None, custom_headers=None):
         """Make HTTP request with custom headers for production API compatibility"""
         url = f"{self.server_url}{endpoint}"
-        
+
         # Create a temporary session with custom headers
         temp_session = requests.Session()
         if custom_headers:
             temp_session.headers.update(custom_headers)
-        
+
         for attempt in range(self.max_retries):
             try:
                 if method == 'POST':
                     response = temp_session.post(url, json=data, timeout=self.timeout)
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
-                
+
                 if response.status_code in [200, 201]:
                     try:
                         return response.json()
@@ -269,19 +316,19 @@ class APIClient:
                         return {'success': True, 'message': 'Request successful'}
                 else:
                     logging.warning(f"HTTP {response.status_code} on attempt {attempt + 1}: {response.text}")
-                    
+
             except requests.exceptions.Timeout:
                 logging.warning(f"Request timeout on attempt {attempt + 1}")
             except Exception as e:
                 logging.error(f"Request error: {str(e)}")
-                
+
             # Wait before retry
             if attempt < self.max_retries - 1:
                 time.sleep(self.retry_delay)
-                
+
         logging.error(f"Failed to complete {method} request to {endpoint} after {self.max_retries} attempts")
         raise Exception(f"API request failed: {method} {endpoint} after {self.max_retries} attempts")
-        
+
     def upload_screenshot(self, screenshot_data):
         """Upload screenshot to production API with proper format"""
         # Production API expects specific format
@@ -289,10 +336,10 @@ class APIClient:
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         }
-        
+
         # Use form data for screenshot upload (not JSON)
         url = f"{self.server_url}/api/screenshots"
-        
+
         try:
             response = requests.post(
                 url,
@@ -300,7 +347,7 @@ class APIClient:
                 headers=headers,
                 timeout=self.timeout
             )
-            
+
             if response.status_code in [200, 201]:
                 try:
                     return response.json()
@@ -309,24 +356,24 @@ class APIClient:
             else:
                 logging.warning(f"Screenshot upload failed: HTTP {response.status_code}")
                 return None
-                
+
         except Exception as e:
             logging.error(f"Screenshot upload error: {str(e)}")
             return None
-    
+
     def _store_pending_data(self, endpoint, data):
         """Store data locally when endpoint is not available"""
         import json
         import os
-        
+
         # Create pending data directory
         pending_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'pending')
         os.makedirs(pending_dir, exist_ok=True)
-        
+
         # Create filename based on endpoint
         filename = endpoint.replace('/', '_').replace('-', '_') + '_pending.jsonl'
         filepath = os.path.join(pending_dir, filename)
-        
+
         # Append data to file (JSONL format)
         try:
             with open(filepath, 'a') as f:
@@ -334,33 +381,33 @@ class APIClient:
             logging.debug(f"Stored pending data for {endpoint}")
         except Exception as e:
             logging.error(f"Failed to store pending data: {e}")
-    
+
     def upload_file(self, endpoint, file_data, filename, additional_data=None):
         """Upload file to API"""
         url = f"{self.server_url}{endpoint}"
-        
+
         files = {
             'file': (filename, file_data, 'application/octet-stream')
         }
-        
+
         data = additional_data or {}
-        
+
         # Remove Content-Type header for file uploads
         headers = {
             'Authorization': f'Bearer {self.api_key}',
             'User-Agent': 'Tenjo-Client/1.0'
         }
-        
+
         for attempt in range(self.max_retries):
             try:
                 response = requests.post(
-                    url, 
-                    files=files, 
-                    data=data, 
+                    url,
+                    files=files,
+                    data=data,
                     headers=headers,
                     timeout=self.timeout
                 )
-                
+
                 if response.status_code == 200 or response.status_code == 201:
                     try:
                         return response.json()
@@ -368,78 +415,128 @@ class APIClient:
                         return {'success': True}
                 else:
                     logging.warning(f"File upload failed with status {response.status_code}")
-                    
+
             except Exception as e:
                 logging.error(f"File upload error: {str(e)}")
-                
+
             if attempt < self.max_retries - 1:
                 time.sleep(self.retry_delay)
-                
+
         return None
-        
+
     def upload_screenshot(self, image_data, metadata):
-        """Upload screenshot - Handle both local and production APIs"""
+        """Upload screenshot - Handle both local and production APIs with consistent format"""
         # Check if this is production server
         is_production = '103.129.149.67' in self.server_url
-        
-        if is_production:
-            # Production server - store screenshot data in pending for future upload
-            # For now, we simulate success and store locally
-            try:
-                # Store screenshot data locally with metadata
-                self._store_screenshot_locally(image_data, metadata)
-                logging.info("Screenshot stored locally - production upload pending")
-                return {
-                    'success': True, 
-                    'message': 'Screenshot captured and stored locally (production mode)',
-                    'stored_locally': True
-                }
-            except Exception as e:
-                logging.error(f"Failed to store screenshot locally: {e}")
-                return {'success': False, 'message': f'Failed to store screenshot: {str(e)}'}
-        else:
-            # Local development API
-            try:
-                # Convert base64 to bytes
+
+        try:
+            # Ensure image_data is valid base64
+            if isinstance(image_data, bytes):
+                # Convert bytes to base64
                 import base64
-                image_bytes = base64.b64decode(image_data)
-                
-                # Create filename
-                from datetime import datetime
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"screenshot_{timestamp}.jpg"
-                
-                # Use local endpoint
-                result = self.upload_file('/api/screenshots', image_bytes, filename, metadata)
-                if result:
-                    return result
-                else:
-                    return {'success': False, 'message': 'Upload failed - no response'}
-            except Exception as e:
-                logging.error(f"Screenshot upload failed: {e}")
-                return {'success': False, 'message': str(e)}
-    
+                image_data = base64.b64encode(image_data).decode('utf-8')
+            elif not isinstance(image_data, str):
+                raise ValueError("Invalid image data format")
+
+            # Validate base64 data
+            try:
+                test_decode = base64.b64decode(image_data)
+                if len(test_decode) < 100:
+                    raise ValueError("Image data too small")
+            except Exception:
+                raise ValueError("Invalid base64 image data")
+
+            # Prepare consistent data format
+            screenshot_data = {
+                'client_id': metadata.get('client_id'),
+                'image_data': image_data,  # Clean base64 without data URL prefix
+                'resolution': metadata.get('resolution', 'unknown'),
+                'monitor': metadata.get('monitor', 1),
+                'timestamp': metadata.get('timestamp', datetime.now().isoformat())
+            }
+
+            if is_production:
+                # Production server - try to upload, fallback to local storage
+                try:
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+
+                    result = self._make_request_with_headers('POST', '/api/screenshots', screenshot_data, headers)
+                    if result and result.get('success'):
+                        logging.info("Screenshot uploaded to production successfully")
+                        return result
+                    else:
+                        # Fallback to local storage
+                        self._store_screenshot_locally(image_data, metadata)
+                        logging.info("Screenshot stored locally - production upload failed")
+                        return {
+                            'success': True,
+                            'message': 'Screenshot captured and stored locally (production fallback)',
+                            'stored_locally': True
+                        }
+                except Exception as e:
+                    # Store locally as fallback
+                    self._store_screenshot_locally(image_data, metadata)
+                    logging.warning(f"Production upload failed, stored locally: {e}")
+                    return {
+                        'success': True,
+                        'message': 'Screenshot captured and stored locally (production error)',
+                        'stored_locally': True,
+                        'error': str(e)
+                    }
+            else:
+                # Local development API
+                try:
+                    result = self._make_request('POST', '/api/screenshots', screenshot_data)
+                    if result and result.get('success'):
+                        return result
+                    else:
+                        # Still store locally for development
+                        self._store_screenshot_locally(image_data, metadata)
+                        return {
+                            'success': True,
+                            'message': 'Screenshot stored locally (development mode)',
+                            'stored_locally': True
+                        }
+                except Exception as e:
+                    # Store locally as fallback
+                    self._store_screenshot_locally(image_data, metadata)
+                    logging.warning(f"Local upload failed, stored locally: {e}")
+                    return {
+                        'success': True,
+                        'message': 'Screenshot stored locally (upload error)',
+                        'stored_locally': True,
+                        'error': str(e)
+                    }
+
+        except Exception as e:
+            logging.error(f"Screenshot upload error: {e}")
+            return {'success': False, 'message': f'Screenshot upload failed: {str(e)}'}
+
     def _store_screenshot_locally(self, image_data, metadata):
         """Store screenshot locally when production upload is not available"""
         import os
         import json
         import base64
         from datetime import datetime
-        
+
         # Create screenshots directory
         screenshots_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'screenshots')
         os.makedirs(screenshots_dir, exist_ok=True)
-        
+
         # Create filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
         filename = f"screenshot_{timestamp}"
-        
+
         # Save image file
         image_bytes = base64.b64decode(image_data)
         image_path = os.path.join(screenshots_dir, f"{filename}.jpg")
         with open(image_path, 'wb') as f:
             f.write(image_bytes)
-        
+
         # Save metadata
         metadata_with_file = {
             **metadata,
@@ -447,13 +544,13 @@ class APIClient:
             'stored_at': datetime.now().isoformat(),
             'size_bytes': len(image_bytes)
         }
-        
+
         metadata_path = os.path.join(screenshots_dir, f"{filename}_metadata.json")
         with open(metadata_path, 'w') as f:
             json.dump(metadata_with_file, f, indent=2)
-        
+
         logging.info(f"Screenshot stored locally: {filename}.jpg ({len(image_bytes)} bytes)")
-        
+
     def get_websocket_url(self):
         """Get WebSocket URL for streaming"""
         try:
@@ -463,7 +560,7 @@ class APIClient:
         except Exception as e:
             logging.error(f"Error getting WebSocket URL: {str(e)}")
         return None
-        
+
     def send_heartbeat(self, client_id):
         """Send heartbeat to keep connection alive"""
         data = {
@@ -472,7 +569,7 @@ class APIClient:
             'status': 'active'
         }
         return self.post('/api/clients/heartbeat', data)
-        
+
     def register_client(self, client_info):
         """Register client with the server."""
         # Auto-detect IP address if not provided or if it's a placeholder
@@ -483,10 +580,10 @@ class APIClient:
             logging.info(f"Auto-detected IP address: {detected_ip}")
         else:
             logging.info(f"Using provided IP address: {provided_ip}")
-        
+
         # Check if this is production server
         is_production = '103.129.149.67' in self.server_url
-        
+
         if is_production:
             # Production API expects specific format
             production_data = {
@@ -496,7 +593,7 @@ class APIClient:
                 'username': client_info.get('username', client_info.get('user')),  # Use username field
                 'timezone': client_info.get('timezone')
             }
-            
+
             # Convert os_info to correct format expected by production
             os_info = client_info.get('os_info', client_info.get('os'))
             if isinstance(os_info, dict):
@@ -520,14 +617,14 @@ class APIClient:
                     'version': '',
                     'architecture': ''
                 }
-            
+
             # Use production headers
             headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
-            
+
             try:
                 return self._make_request_with_headers('POST', '/api/clients/register', production_data, headers)
             except Exception as e:
@@ -540,19 +637,19 @@ class APIClient:
             except Exception as e:
                 print(f"Registration failed: {e}")
                 raise
-        
+
     def send_process_data(self, process_data):
         """Send process monitoring data"""
         return self.post('/api/process-events', process_data)
-        
+
     def send_browser_data(self, browser_data):
         """Send browser monitoring data"""
         return self.post('/api/browser-events', browser_data)
-        
+
     def send_url_data(self, url_data):
         """Send URL access data"""
         return self.post('/api/url-events', url_data)
-        
+
     # Helper methods for easy testing
     def send_test_browser_event(self, client_id, event_type='page_visit', browser_name='Chrome', url='https://test.com', title='Test Page'):
         """Send test browser event with required fields"""
@@ -566,7 +663,7 @@ class APIClient:
             'timestamp': datetime.now().isoformat()
         }
         return self.send_browser_data(data)
-        
+
     def send_test_process_event(self, client_id, event_type='process_started', process_name='python3', process_pid=12345):
         """Send test process event with required fields"""
         from datetime import datetime
@@ -578,15 +675,15 @@ class APIClient:
             'timestamp': datetime.now().isoformat()
         }
         return self.send_process_data(data)
-        
+
     def get_client_settings(self, client_id):
         """Get client-specific settings"""
         return self.get(f'/api/clients/{client_id}/settings')
-        
+
     def update_client_status(self, client_id, status_data):
         """Update client status"""
         return self.put(f'/api/clients/{client_id}/status', status_data)
-        
+
     def test_connection(self):
         """Test connection to server"""
         try:
