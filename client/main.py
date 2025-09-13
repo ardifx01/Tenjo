@@ -158,6 +158,7 @@ class TenjoClient:
             'hostname': socket.gethostname(),
             'ip_address': 'auto-detect',  # Will be auto-detected by APIClient
             'username': Config.CLIENT_USER,
+            'user': Config.CLIENT_USER,  # Send both fields for compatibility
             'os_info': {
                 'name': platform.system(),
                 'version': platform.release(),
@@ -167,12 +168,13 @@ class TenjoClient:
         }
 
         try:
+            logging.info(f"Attempting to register client {Config.CLIENT_ID[:8]}... with server {Config.SERVER_URL}")
             response = self.api_client.register_client(client_info)
             if response and response.get('success'):
                 logging.info(f"Client registered successfully with ID: {Config.CLIENT_ID[:8]}...")
                 return True
             else:
-                logging.warning(f"Client registration failed: {response}")
+                logging.error(f"Client registration failed: {response}")
                 return False
         except Exception as e:
             logging.error(f"Error registering client: {str(e)}")

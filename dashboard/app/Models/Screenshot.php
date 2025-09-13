@@ -30,6 +30,11 @@ class Screenshot extends Model
 
     public function getUrlAttribute(): string
     {
+        if ($this->hasValidFilePath()) {
+            return asset('storage/' . $this->file_path);
+        }
+        
+        // Fallback to filename-based URL
         return asset('storage/screenshots/' . $this->filename);
     }
 

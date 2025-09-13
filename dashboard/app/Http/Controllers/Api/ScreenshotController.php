@@ -33,12 +33,20 @@ class ScreenshotController extends Controller
 
         try {
             // Decode base64 image
-            $imageData = base64_decode($request->image_data);
+            $imageData = base64_decode($request->image_data, true);
 
             if (!$imageData) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            // Validate image data
+            if (strlen($imageData) < 1000) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image data too small'
                 ], 400);
             }
 
@@ -52,7 +60,20 @@ class ScreenshotController extends Controller
 
             // Store image
             $path = 'screenshots/' . $filename;
-            Storage::disk('public')->put($path, $imageData);
+            
+            // Ensure screenshots directory exists
+            if (!Storage::disk('public')->exists('screenshots')) {
+                Storage::disk('public')->makeDirectory('screenshots');
+            }
+            
+            $stored = Storage::disk('public')->put($path, $imageData);
+            
+            if (!$stored) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store image file'
+                ], 500);
+            }
 
             // Create screenshot record
             $screenshot = Screenshot::create([
@@ -71,10 +92,19 @@ class ScreenshotController extends Controller
             return response()->json([
                 'success' => true,
                 'screenshot_id' => $screenshot->id,
+                'file_path' => $path,
+                'file_size' => strlen($imageData),
                 'message' => 'Screenshot uploaded successfully'
             ], 201);
 
         } catch (\Exception $e) {
+            \Log::error('Screenshot upload error: ' . $e->getMessage(), [
+                'client_id' => $request->client_id,
+                'resolution' => $request->resolution,
+                'data_length' => strlen($request->image_data ?? ''),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to upload screenshot: ' . $e->getMessage()

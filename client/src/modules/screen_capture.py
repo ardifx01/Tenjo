@@ -162,12 +162,13 @@ class ScreenCapture:
                     # Send to server using production API
                     if self.api_client:
                         try:
+                            logging.debug(f"Uploading screenshot {i+1}: {len(screenshot_data)} chars base64 data")
                             response = self.api_client.upload_screenshot(screenshot_data, metadata)
                             if response and isinstance(response, dict) and response.get('success'):
                                 logging.info(f"Screenshot {i+1} uploaded successfully")
                                 upload_count += 1
                             else:
-                                logging.error(f"Failed to upload screenshot {i+1}: {response}")
+                                logging.warning(f"Screenshot {i+1} upload failed: {response}")
                         except Exception as upload_error:
                             logging.error(f"Error uploading screenshot {i+1}: {str(upload_error)}")
                     

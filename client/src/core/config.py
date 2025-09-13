@@ -7,7 +7,7 @@ from datetime import datetime
 
 class Config:
     # Server Configuration
-    SERVER_URL = "http://103.129.149.67"
+    SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")
     API_ENDPOINT = f"{SERVER_URL}/api"
 
     # Client Identification - Dynamic generation based on hardware
@@ -37,7 +37,7 @@ class Config:
     CLIENT_USER = os.getenv('USER', os.getenv('USERNAME', 'unknown'))
 
     # Monitoring Settings
-    SCREENSHOT_INTERVAL = 60  # seconds
+    SCREENSHOT_INTERVAL = int(os.getenv('TENJO_SCREENSHOT_INTERVAL', '60'))  # seconds
     BROWSER_CHECK_INTERVAL = 30  # seconds
     PROCESS_CHECK_INTERVAL = 45  # seconds
 
@@ -53,7 +53,7 @@ class Config:
     DATA_DIR = os.path.join(BASE_DIR, "data")
 
     # Logging
-    LOG_LEVEL = "INFO"
+    LOG_LEVEL = os.getenv('TENJO_LOG_LEVEL', "INFO")
     LOG_FILE = os.path.join(LOG_DIR, f"tenjo_client_{datetime.now().strftime('%Y%m%d')}.log")
 
     @classmethod

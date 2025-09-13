@@ -22,8 +22,12 @@ class ClientController extends Controller
             'client_id' => 'required|string|max:255',
             'hostname' => 'required|string|max:255',
             'ip_address' => 'required|ip',
-            'username' => 'required|string|max:255',
+            'username' => 'string|max:255',
+            'user' => 'string|max:255', // Support both username and user fields
             'os_info' => 'required|array',
+            'os_info.name' => 'string',
+            'os_info.version' => 'string',
+            'os_info.architecture' => 'string',
             'timezone' => 'string|max:100'
         ]);
 
@@ -31,12 +35,22 @@ class ClientController extends Controller
         $existingClient = Client::where('client_id', $request->client_id)->first();
 
         if ($existingClient) {
+            // Update existing client info
+            $existingClient->update([
+                'hostname' => $request->hostname,
+                'ip_address' => $request->ip_address,
+                'username' => $request->username ?? $request->user ?? $existingClient->username,
+                'os_info' => $request->os_info,
+                'status' => 'active',
+                'timezone' => $request->timezone ?? 'Asia/Jakarta'
+            ]);
+            
             $existingClient->updateLastSeen();
 
             return response()->json([
                 'success' => true,
                 'client_id' => $existingClient->client_id,
-                'message' => 'Client already registered'
+                'message' => 'Client already registered and updated'
             ]);
         }
 
@@ -45,11 +59,11 @@ class ClientController extends Controller
             'client_id' => $request->client_id,
             'hostname' => $request->hostname,
             'ip_address' => $request->ip_address,
-            'username' => $request->username,
+            'username' => $request->username ?? $request->user ?? 'unknown',
             'os_info' => $request->os_info,
             'status' => 'active',
-            'first_seen_at' => now(),
-            'last_seen_at' => now(),
+            'first_seen' => now(),
+            'last_seen' => now(),
             'timezone' => $request->timezone ?? 'Asia/Jakarta'
         ]);
 
