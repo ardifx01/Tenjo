@@ -36,6 +36,15 @@
         "documentation": {}
     },
     {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -341,15 +350,6 @@
         "documentation": {}
     },
     {
-        "label": "json",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "json",
-        "description": "json",
-        "detail": "json",
-        "documentation": {}
-    },
-    {
         "label": "requests",
         "kind": 6,
         "isExtraImport": true,
@@ -500,7 +500,16 @@
         "kind": 6,
         "importPath": "client.installer_package.src.core.config",
         "description": "client.installer_package.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")  # Production server\n    # SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://127.0.0.1:8000\")  # Local development server\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Base paths for persistent storage\n    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n    DATA_DIR = os.path.join(BASE_DIR, \"data\")\n    LOG_DIR = os.path.join(BASE_DIR, \"logs\")",
+        "detail": "client.installer_package.src.core.config",
+        "documentation": {}
+    },
+    {
+        "label": "Config.CLIENT_ID",
+        "kind": 5,
+        "importPath": "client.installer_package.src.core.config",
+        "description": "client.installer_package.src.core.config",
+        "peekOfCode": "Config.CLIENT_ID = Config.get_client_id()",
         "detail": "client.installer_package.src.core.config",
         "documentation": {}
     },
@@ -617,7 +626,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    # SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")  # Production server\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://127.0.0.1:8000\")  # Local development server\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"",
         "detail": "client.src.core.config",
         "documentation": {}
     },

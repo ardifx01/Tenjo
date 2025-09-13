@@ -10,7 +10,8 @@ INSTALL_DIR="$HOME/.tenjo"
 SERVICE_NAME="com.tenjo.monitor"
 PLIST_FILE="$HOME/Library/LaunchAgents/$SERVICE_NAME.plist"
 PYTHON_VENV="$INSTALL_DIR/.venv"
-SERVER_URL="http://103.129.149.67"  # Production server URL
+SERVER_URL="http://103.129.149.67"  # Production server URL (commented for testing)
+# SERVER_URL="http://127.0.0.1:8000"  # Local development server for testing
 API_KEY="tenjo-api-key-2024"
 
 # Colors for output

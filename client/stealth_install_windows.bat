@@ -10,6 +10,7 @@ set "INSTALL_DIR=%USERPROFILE%\.tenjo"
 set "SERVICE_NAME=TenjoMonitor"
 set "PYTHON_VENV=%INSTALL_DIR%\.venv"
 set "SERVER_URL=http://103.129.149.67"
+REM set "SERVER_URL=http://127.0.0.1:8000"
 set "API_KEY=tenjo-api-key-2024"
 
 echo [%date% %time%] Starting Tenjo stealth installation...
