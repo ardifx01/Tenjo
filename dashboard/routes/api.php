@@ -47,6 +47,11 @@ Route::prefix('stream')->group(function () {
     // Client endpoints
     Route::get('/request/{clientId}', [StreamController::class, 'getStreamRequest']);
     Route::post('/chunk/{clientId}', [StreamController::class, 'uploadStreamChunk']);
+    
+    // Video streaming endpoints
+    Route::post('/video/{clientId}', [StreamController::class, 'uploadVideoChunk']);
+    Route::post('/screenshot/{clientId}', [StreamController::class, 'uploadScreenshotChunk']);
+    Route::get('/status/{clientId}', [StreamController::class, 'getStreamStatus']);
 
     // Dashboard endpoints
     Route::post('/start/{clientId}', [StreamController::class, 'startStream']);

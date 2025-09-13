@@ -662,7 +662,7 @@
         "kind": 6,
         "importPath": "client.src.modules.stream_handler",
         "description": "client.src.modules.stream_handler",
-        "peekOfCode": "class StreamHandler:\n    def __init__(self, api_client):\n        self.api_client = api_client\n        self.is_streaming = False\n        self.ffmpeg_process = None\n        self.stream_quality = 'medium'  # low, medium, high\n        self.sequence = 0\n        self.stream_thread = None  # Initialize thread reference\n        # Stream settings\n        self.stream_settings = {",
+        "peekOfCode": "class StreamHandler:\n    def __init__(self, api_client):\n        self.api_client = api_client\n        self.is_streaming = False\n        self.ffmpeg_process = None\n        self.stream_quality = 'medium'  # low, medium, high\n        self.sequence = 0\n        self.stream_thread = None  # Initialize thread reference\n        self.video_streaming = False  # Flag for video streaming mode\n        self.video_thread = None",
         "detail": "client.src.modules.stream_handler",
         "documentation": {}
     },

