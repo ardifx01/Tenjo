@@ -9,6 +9,7 @@ class Config:
     # Server Configuration
     SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")
     API_ENDPOINT = f"{SERVER_URL}/api"
+    API_KEY = os.getenv('TENJO_API_KEY', "default-api-key-2024")
 
     # Client Identification - Dynamic generation based on hardware
     @staticmethod
