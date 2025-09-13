@@ -12,17 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Fix clients table column names to match what the client sends
-        Schema::table('clients', function (Blueprint $table) {
-            // Check if columns exist before adding them
-            if (!Schema::hasColumn('clients', 'first_seen')) {
-                $table->timestamp('first_seen')->nullable()->after('last_seen');
-            }
-        });
-
-        // Update existing records to use correct column names
-        DB::statement("UPDATE clients SET first_seen = first_seen_at WHERE first_seen IS NULL AND first_seen_at IS NOT NULL");
-        DB::statement("UPDATE clients SET last_seen = last_seen_at WHERE last_seen IS NULL AND last_seen_at IS NOT NULL");
+        // The clients table already has the correct column names (first_seen, last_seen)
+        // This migration was created to fix column names that were already correct
+        // So we don't need to do anything here
     }
 
     /**
@@ -30,10 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
-            if (Schema::hasColumn('clients', 'first_seen')) {
-                $table->dropColumn('first_seen');
-            }
-        });
+        // No changes to reverse since no changes were made in up()
     }
 };
