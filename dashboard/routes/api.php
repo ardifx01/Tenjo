@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\UrlEventController;
 use App\Http\Controllers\StreamController;
 
 // Add CORS middleware for production
-Route::middleware(['cors'])->group(function () {
+Route::middleware([])->group(function () {
 
 // Activity export
 Route::get('/activities/export', [ClientController::class, 'exportActivities']);
