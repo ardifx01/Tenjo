@@ -247,9 +247,13 @@ class StreamHandler:
                     
                     # Platform-specific screen capture settings
                     if platform.system() == 'Darwin':  # macOS
+                        # For macOS, use screen capture device index 1 (which captures screen 0)
+                        # Add capture_cursor and capture_mouse_clicks for better capture
                         input_args = [
                             '-f', 'avfoundation',
-                            '-i', '1',  # Screen capture device (Capture screen 0)
+                            '-capture_cursor', '1',  # Capture mouse cursor
+                            '-capture_mouse_clicks', '1',  # Capture mouse clicks
+                            '-i', '1',  # Screen capture device (Capture screen 0 - Main display)
                             '-r', str(settings['fps'])
                         ]
                     elif platform.system() == 'Windows':
@@ -362,7 +366,15 @@ class StreamHandler:
                     logging.info(f"Starting MSS video stream with quality: {self.stream_quality}, target fps: {target_fps}")
                     
                     with mss.mss() as sct:
-                        monitor = sct.monitors[1]  # Primary monitor
+                        # Debug monitor information
+                        logging.info(f"Available monitors: {len(sct.monitors)}")
+                        for i, monitor in enumerate(sct.monitors):
+                            logging.info(f"Monitor {i}: {monitor}")
+                        
+                        # Use monitor 0 (all monitors combined) for primary capture
+                        # This captures the main desktop area, not extended displays
+                        monitor = sct.monitors[0]  # All monitors combined (primary desktop)
+                        logging.info(f"Using monitor 0 for capture: {monitor}")
                         
                         while self.video_streaming:
                             start_time = time.time()
