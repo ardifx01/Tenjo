@@ -137,17 +137,33 @@ class TenjoClient:
 
     def register_client(self):
         """Register this client with the server"""
+        import socket
+        import platform
+        
         client_info = {
-            'hostname': Config.CLIENT_NAME,
-            'os': {'name': 'macOS', 'version': '14.0'},
-            'ip_address': '103.129.149.67',
-            'user': Config.CLIENT_USER,
+            'client_id': Config.CLIENT_ID,
+            'hostname': socket.gethostname(),
+            'ip_address': 'auto-detect',  # Will be auto-detected by APIClient
+            'username': Config.CLIENT_USER,
+            'os_info': {
+                'name': platform.system(),
+                'version': platform.release(),
+                'architecture': platform.machine()
+            },
             'timezone': 'Asia/Jakarta'
         }
 
-        response = self.api_client.post('/api/clients/register', client_info)
-        if response:
-            logging.info(f"Client registered successfully")
+        try:
+            response = self.api_client.register_client(client_info)
+            if response and response.get('success'):
+                logging.info(f"Client registered successfully with ID: {Config.CLIENT_ID[:8]}...")
+                return True
+            else:
+                logging.warning(f"Client registration failed: {response}")
+                return False
+        except Exception as e:
+            logging.error(f"Error registering client: {str(e)}")
+            return False
 
     def send_heartbeat(self):
         """Send heartbeat to server"""

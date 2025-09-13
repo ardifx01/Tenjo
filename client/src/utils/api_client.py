@@ -4,6 +4,9 @@ import requests
 import json
 import logging
 import time
+import socket
+import subprocess
+import platform
 from datetime import datetime
 import base64
 
@@ -28,6 +31,116 @@ class APIClient:
         self.timeout = 30
         self.max_retries = 3
         self.retry_delay = 5
+        
+    def get_real_ip_address(self):
+        """Auto-detect the real IP address of the client."""
+        try:
+            # Method 1: Try to get IP by connecting to a remote server
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                # Connect to Google DNS (doesn't actually send data)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                
+            # Validate the IP is not localhost or link-local
+            if local_ip and local_ip != "127.0.0.1" and not local_ip.startswith("169.254"):
+                logging.info(f"Detected local IP via socket method: {local_ip}")
+                return local_ip
+                
+        except Exception as e:
+            logging.debug(f"Socket method failed: {e}")
+            
+        try:
+            # Method 2: Try using system commands
+            system = platform.system().lower()
+            
+            if system == "windows":
+                # Windows: Use ipconfig
+                result = subprocess.run(
+                    ["ipconfig"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                for line in result.stdout.split('\n'):
+                    if 'IPv4 Address' in line and '192.168.' in line:
+                        ip = line.split(':')[-1].strip()
+                        if ip and ip != "127.0.0.1":
+                            logging.info(f"Detected IP via ipconfig: {ip}")
+                            return ip
+                            
+            elif system in ["darwin", "linux"]:
+                # macOS/Linux: Use ifconfig or ip command
+                commands = [
+                    ["ifconfig"],
+                    ["ip", "addr", "show"]
+                ]
+                
+                for cmd in commands:
+                    try:
+                        result = subprocess.run(
+                            cmd,
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+                        
+                        # Look for common private IP ranges
+                        for line in result.stdout.split('\n'):
+                            # Match IPv4 addresses
+                            import re
+                            ip_pattern = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                            matches = re.findall(ip_pattern, line)
+                            
+                            for ip in matches:
+                                # Check if it's a valid private IP
+                                if (ip.startswith('192.168.') or 
+                                    ip.startswith('10.') or 
+                                    ip.startswith('172.')):
+                                    logging.info(f"Detected IP via {cmd[0]}: {ip}")
+                                    return ip
+                    except Exception:
+                        continue
+                        
+        except Exception as e:
+            logging.debug(f"System command method failed: {e}")
+            
+        try:
+            # Method 3: Try to get hostname IP
+            hostname = socket.gethostname()
+            ip = socket.gethostbyname(hostname)
+            
+            if ip and ip != "127.0.0.1" and not ip.startswith("169.254"):
+                logging.info(f"Detected IP via hostname resolution: {ip}")
+                return ip
+                
+        except Exception as e:
+            logging.debug(f"Hostname resolution failed: {e}")
+            
+        # Method 4: Fallback - try to get any network interface
+        try:
+            import netifaces
+            for interface in netifaces.interfaces():
+                addrs = netifaces.ifaddresses(interface)
+                if netifaces.AF_INET in addrs:
+                    for addr_info in addrs[netifaces.AF_INET]:
+                        ip = addr_info.get('addr')
+                        if (ip and ip != "127.0.0.1" and 
+                            not ip.startswith("169.254") and
+                            (ip.startswith('192.168.') or 
+                             ip.startswith('10.') or 
+                             ip.startswith('172.'))):
+                            logging.info(f"Detected IP via netifaces: {ip}")
+                            return ip
+        except ImportError:
+            # netifaces not available
+            pass
+        except Exception as e:
+            logging.debug(f"Netifaces method failed: {e}")
+            
+        # Final fallback
+        logging.warning("Could not auto-detect IP address, using fallback")
+        return "192.168.1.100"  # Generic fallback
         
     def post(self, endpoint, data):
         """Send POST request to API"""
@@ -304,6 +417,15 @@ class APIClient:
         
     def register_client(self, client_info):
         """Register client with the server."""
+        # Auto-detect IP address if not provided or if it's a placeholder
+        provided_ip = client_info.get('ip_address', '')
+        if not provided_ip or provided_ip in ['192.168.1.100', '127.0.0.1', 'localhost', 'auto-detect']:
+            detected_ip = self.get_real_ip_address()
+            client_info['ip_address'] = detected_ip
+            logging.info(f"Auto-detected IP address: {detected_ip}")
+        else:
+            logging.info(f"Using provided IP address: {provided_ip}")
+        
         # Check if this is production server
         is_production = '103.129.149.67' in self.server_url
         
@@ -313,24 +435,33 @@ class APIClient:
                 'client_id': client_info.get('client_id'),
                 'hostname': client_info.get('hostname'),
                 'ip_address': client_info.get('ip_address'),
-                'user': client_info.get('username', client_info.get('user')),
+                'username': client_info.get('username', client_info.get('user')),  # Use username field
                 'timezone': client_info.get('timezone')
             }
             
-            # Convert os_info to array format expected by production
+            # Convert os_info to correct format expected by production
             os_info = client_info.get('os_info', client_info.get('os'))
             if isinstance(os_info, dict):
-                # Convert dict to array: [name, version]
-                production_data['os'] = [
-                    os_info.get('name', ''),
-                    os_info.get('version', '')
-                ]
+                # Keep as dict but with simple structure
+                production_data['os_info'] = {
+                    'name': os_info.get('name', ''),
+                    'version': os_info.get('version', ''),
+                    'architecture': os_info.get('architecture', '')
+                }
             elif isinstance(os_info, str):
-                # Convert string to array by splitting
+                # Convert string to dict
                 parts = os_info.split(' ', 1)
-                production_data['os'] = parts if len(parts) == 2 else [os_info, '']
+                production_data['os_info'] = {
+                    'name': parts[0] if len(parts) > 0 else 'Unknown',
+                    'version': parts[1] if len(parts) > 1 else '',
+                    'architecture': ''
+                }
             else:
-                production_data['os'] = ['Unknown', '']
+                production_data['os_info'] = {
+                    'name': 'Unknown',
+                    'version': '',
+                    'architecture': ''
+                }
             
             # Use production headers
             headers = {

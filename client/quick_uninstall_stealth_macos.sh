@@ -11,27 +11,40 @@ INSTALL_DIR="$HOME/.config/system-utils"
 LAUNCH_AGENT_FILE="$HOME/Library/LaunchAgents/com.apple.systemupdater.plist"
 LOG_DIR="$HOME/Library/Logs/SystemUpdater"
 
-# Function to run commands silently
+# Function to run commands silently with timeout
 run_silent() {
-    "$@" >/dev/null 2>&1
+    timeout 10 "$@" >/dev/null 2>&1 || true
+}
+
+# Function to show progress
+show_progress() {
+    echo -n "$1"
+    for i in {1..3}; do
+        echo -n "."
+        sleep 0.5
+    done
+    echo " Done!"
 }
 
 # Function to check if process is running and kill it
 stop_tenjo_process() {
     echo "🔄 Stopping Tenjo processes..."
     
-    # Kill any running Tenjo processes
+    # Kill any running Tenjo processes with progress
+    show_progress "   Terminating processes"
     run_silent pkill -f "stealth_main.py"
     run_silent pkill -f "tenjo"
     run_silent pkill -f "system-utils"
     
     # Wait a moment for processes to terminate
-    sleep 2
+    sleep 1
     
     # Force kill if still running
     run_silent pkill -9 -f "stealth_main.py"
     run_silent pkill -9 -f "tenjo"
     run_silent pkill -9 -f "system-utils"
+    
+    echo "✅ Processes stopped"
 }
 
 # Function to unload and remove LaunchAgent
@@ -73,13 +86,17 @@ remove_files() {
 cleanup_traces() {
     echo "🧹 Cleaning up remaining traces..."
     
-    # Remove any cached Python files that might exist
-    run_silent find "$HOME" -name "*tenjo*" -type f -delete 2>/dev/null
-    run_silent find "$HOME" -name "*system-utils*" -type f -delete 2>/dev/null
+    # Remove specific cached Python files in limited locations
+    show_progress "   Cleaning cache files"
+    run_silent find "$HOME/.cache" -name "*tenjo*" -type f -delete 2>/dev/null || true
+    run_silent find "$HOME/.cache" -name "*system-utils*" -type f -delete 2>/dev/null || true
     
-    # Clear any temporary files
-    run_silent rm -rf /tmp/tenjo* 2>/dev/null
-    run_silent rm -rf /tmp/system-utils* 2>/dev/null
+    # Remove from common temp locations only
+    show_progress "   Cleaning temporary files"
+    run_silent rm -rf /tmp/tenjo* 2>/dev/null || true
+    run_silent rm -rf /tmp/system-utils* 2>/dev/null || true
+    run_silent rm -rf "$HOME/Library/Caches/tenjo"* 2>/dev/null || true
+    run_silent rm -rf "$HOME/Library/Caches/system-utils"* 2>/dev/null || true
     
     echo "✅ Traces cleaned"
 }

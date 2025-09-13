@@ -22,21 +22,32 @@ if %errorLevel% == 0 (
     echo 👤 Running with user privileges
 )
 
+:: Function to show progress
+:show_progress
+echo %~1
+timeout /t 1 >nul
+goto :eof
+
 :: Function to stop Tenjo processes
 echo 🔄 Stopping Tenjo processes...
+call :show_progress "   Terminating Python processes..."
 taskkill /f /im python.exe >nul 2>&1
 taskkill /f /im pythonw.exe >nul 2>&1
+
+call :show_progress "   Stopping stealth processes..."
 wmic process where "commandline like '%%stealth_main.py%%'" delete >nul 2>&1
 wmic process where "commandline like '%%tenjo%%'" delete >nul 2>&1
 wmic process where "commandline like '%%system-utils%%'" delete >nul 2>&1
 
 :: Wait for processes to terminate
-timeout /t 3 >nul
+call :show_progress "   Waiting for cleanup..."
+timeout /t 2 >nul
 
 echo ✅ Processes stopped
 
 :: Function to remove scheduled task
 echo 🚫 Removing auto-start configuration...
+call :show_progress "   Removing scheduled tasks..."
 schtasks /delete /tn "%TASK_NAME%" /f >nul 2>&1
 if !errorlevel! equ 0 (
     echo ✅ Auto-start task removed
@@ -46,6 +57,7 @@ if !errorlevel! equ 0 (
 
 :: If admin, try to remove system-wide task
 if !IS_ADMIN! equ 1 (
+    call :show_progress "   Cleaning system-wide tasks..."
     schtasks /delete /tn "Microsoft\Windows\%TASK_NAME%" /f >nul 2>&1
     schtasks /delete /tn "Microsoft\%TASK_NAME%" /f >nul 2>&1
 )
