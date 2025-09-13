@@ -7,8 +7,8 @@ from datetime import datetime
 
 class Config:
     # Server Configuration
-    # SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")  # Production server
-    SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://127.0.0.1:8000")  # Local development server
+    SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://103.129.149.67")  # Production server
+    # SERVER_URL = os.getenv('TENJO_SERVER_URL', "http://127.0.0.1:8000")  # Local development server
     API_ENDPOINT = f"{SERVER_URL}/api"
     API_KEY = os.getenv('TENJO_API_KEY', "tenjo-api-key-2024")
 

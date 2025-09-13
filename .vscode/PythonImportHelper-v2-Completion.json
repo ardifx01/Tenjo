@@ -626,7 +626,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    # SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")  # Production server\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://127.0.0.1:8000\")  # Local development server\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")  # Production server\n    # SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://127.0.0.1:8000\")  # Local development server\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"tenjo-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"",
         "detail": "client.src.core.config",
         "documentation": {}
     },

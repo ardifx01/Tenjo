@@ -249,7 +249,7 @@ class StreamHandler:
                     if platform.system() == 'Darwin':  # macOS
                         input_args = [
                             '-f', 'avfoundation',
-                            '-i', '1:0',  # Screen capture (display 1, no audio)
+                            '-i', '1',  # Screen capture device (Capture screen 0)
                             '-r', str(settings['fps'])
                         ]
                     elif platform.system() == 'Windows':
@@ -326,6 +326,93 @@ class StreamHandler:
             self.video_thread = threading.Thread(target=video_stream_worker, daemon=True)
             self.video_thread.start()
             logging.info(f"Real video streaming started with quality: {self.stream_quality}")
+            
+        except Exception as e:
+            logging.error(f"Video streaming startup error: {e}")
+            # Fallback to MSS-based screen capture
+            self.start_mss_video_streaming()
+            
+    def start_mss_video_streaming(self):
+        """Fallback video streaming using MSS (Python screenshot library)"""
+        try:
+            if self.video_streaming and self.video_thread and self.video_thread.is_alive():
+                logging.warning("MSS Video streaming already running")
+                return
+                
+            def mss_video_worker():
+                """Worker thread for MSS-based video streaming"""
+                try:
+                    import mss
+                    import io
+                    from PIL import Image
+                    
+                    # Get quality settings
+                    settings = self.stream_settings[self.stream_quality]
+                    target_fps = settings['fps']
+                    frame_interval = 1.0 / target_fps
+                    
+                    # Parse scale settings for resize
+                    scale_setting = settings['scale']
+                    if scale_setting.startswith('-1:'):
+                        target_height = int(scale_setting.split(':')[1])
+                        target_width = None  # Will be calculated to maintain aspect ratio
+                    else:
+                        target_width, target_height = map(int, scale_setting.split('x'))
+                    
+                    logging.info(f"Starting MSS video stream with quality: {self.stream_quality}, target fps: {target_fps}")
+                    
+                    with mss.mss() as sct:
+                        monitor = sct.monitors[1]  # Primary monitor
+                        
+                        while self.video_streaming:
+                            start_time = time.time()
+                            
+                            # Capture screenshot
+                            screenshot = sct.grab(monitor)
+                            
+                            # Convert to PIL Image
+                            img = Image.frombytes('RGB', screenshot.size, screenshot.bgra, 'raw', 'BGRX')
+                            
+                            # Resize based on quality settings
+                            if target_width and target_height:
+                                img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+                            elif target_height:
+                                # Calculate width maintaining aspect ratio
+                                aspect_ratio = img.width / img.height
+                                new_width = int(target_height * aspect_ratio)
+                                img = img.resize((new_width, target_height), Image.Resampling.LANCZOS)
+                            
+                            # Convert to JPEG
+                            buffer = io.BytesIO()
+                            img.save(buffer, format='JPEG', quality=85)
+                            img_data = buffer.getvalue()
+                            
+                            # Encode to base64 and send
+                            import base64
+                            encoded_frame = base64.b64encode(img_data).decode('utf-8')
+                            
+                            # Send frame using existing chunk endpoint
+                            if self.send_video_chunk(img_data):
+                                logging.debug(f"MSS video frame {self.sequence} sent successfully")
+                            else:
+                                logging.debug(f"Failed to send MSS video frame {self.sequence}")
+                            
+                            # Frame rate control
+                            elapsed = time.time() - start_time
+                            sleep_time = max(0, frame_interval - elapsed)
+                            if sleep_time > 0:
+                                time.sleep(sleep_time)
+                                
+                except Exception as e:
+                    logging.error(f"MSS video streaming error: {e}")
+                finally:
+                    self.video_streaming = False
+                    logging.info("MSS video streaming stopped")
+                    
+            # Start MSS video streaming thread
+            self.video_thread = threading.Thread(target=mss_video_worker, daemon=True)
+            self.video_thread.start()
+            logging.info(f"MSS video streaming started as fallback with quality: {self.stream_quality}")
             
         except Exception as e:
             logging.error(f"Failed to start video streaming: {e}")
