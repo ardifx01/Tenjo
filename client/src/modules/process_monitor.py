@@ -4,8 +4,14 @@ import psutil
 import time
 import threading
 import logging
+import sys
+import os
 from datetime import datetime
 from collections import defaultdict
+
+# Add src to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from core.config import Config
 
 class ProcessMonitor:
     def __init__(self, api_client):
@@ -168,6 +174,7 @@ class ProcessMonitor:
     def send_process_event(self, event_type, proc_info, timestamp, start_time=None, duration=None):
         """Send process event to server"""
         data = {
+            'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'process_name': proc_info['name'],
             'process_pid': proc_info['pid'],

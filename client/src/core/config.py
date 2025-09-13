@@ -1,5 +1,8 @@
 # Tenjo Client Configuration for Yayasans-MacBook-Air.local
 import os
+import uuid
+import socket
+import platform
 from datetime import datetime
 
 class Config:
@@ -7,10 +10,30 @@ class Config:
     SERVER_URL = "http://103.129.149.67"
     API_ENDPOINT = f"{SERVER_URL}/api"
 
-    # Client Identification
-    CLIENT_ID = "5fd85b0a-def8-432c-b10a-0a28c22f5baf"  # From database registration
-    CLIENT_NAME = "Yayasans-MacBook-Air.local"
-    CLIENT_USER = "yapi"
+    # Client Identification - Dynamic generation
+    @staticmethod
+    def generate_client_id():
+        """Generate unique client ID based on hardware"""
+        import hashlib
+        
+        # Get unique identifiers
+        hostname = socket.gethostname()
+        mac_address = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) 
+                               for elements in range(0,2*6,2)][::-1])
+        
+        # Create deterministic UUID based on hostname + MAC
+        unique_string = f"{hostname}-{mac_address}"
+        hash_object = hashlib.md5(unique_string.encode())
+        
+        # Convert to UUID format
+        hex_dig = hash_object.hexdigest()
+        client_uuid = f"{hex_dig[:8]}-{hex_dig[8:12]}-{hex_dig[12:16]}-{hex_dig[16:20]}-{hex_dig[20:32]}"
+        
+        return client_uuid
+    
+    CLIENT_ID = generate_client_id.__func__()  # Generate dynamic client ID
+    CLIENT_NAME = socket.gethostname()
+    CLIENT_USER = os.getenv('USER', os.getenv('USERNAME', 'unknown'))
 
     # Monitoring Settings
     SCREENSHOT_INTERVAL = 60  # seconds

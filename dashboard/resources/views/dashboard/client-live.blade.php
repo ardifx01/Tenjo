@@ -967,8 +967,26 @@ function toggleFullscreen() {
 }
 
 function takeScreenshot() {
-    // In real implementation, this would capture current frame
-    alert('Screenshot captured! (Demo)');
+    // Request screenshot from client
+    fetch('/api/clients/{{ $client->client_id }}/screenshot', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Screenshot requested successfully', 'success');
+        } else {
+            showAlert('Failed to request screenshot', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error requesting screenshot', 'error');
+    });
 }
 
 function requestScreenshot() {

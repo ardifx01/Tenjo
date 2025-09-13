@@ -343,11 +343,45 @@ class DashboardController extends Controller
             $statsQuery->where('event_type', $request->event_type);
         }
 
+        // Calculate stats separately to avoid query conflicts
+        $totalEvents = $statsQuery->count();
+
+        // Create fresh query for unique URLs count
+        $uniqueUrlsQuery = UrlEvent::whereDate('created_at', today());
+        if ($request->has('client_id') && $request->client_id) {
+            $uniqueUrlsQuery->where('client_id', $request->client_id);
+        }
+        if ($request->has('event_type') && $request->event_type) {
+            $uniqueUrlsQuery->where('event_type', $request->event_type);
+        }
+        $uniqueUrls = $uniqueUrlsQuery->distinct('url')->count();
+
+        // Create fresh query for average duration
+        $avgDurationQuery = UrlEvent::whereDate('created_at', today())
+            ->whereNotNull('duration');
+        if ($request->has('client_id') && $request->client_id) {
+            $avgDurationQuery->where('client_id', $request->client_id);
+        }
+        if ($request->has('event_type') && $request->event_type) {
+            $avgDurationQuery->where('event_type', $request->event_type);
+        }
+        $avgDuration = round($avgDurationQuery->avg('duration') / 60, 1) ?? 0;
+
+        // Create fresh query for active clients
+        $activeClientsQuery = UrlEvent::whereDate('created_at', today());
+        if ($request->has('client_id') && $request->client_id) {
+            $activeClientsQuery->where('client_id', $request->client_id);
+        }
+        if ($request->has('event_type') && $request->event_type) {
+            $activeClientsQuery->where('event_type', $request->event_type);
+        }
+        $activeClients = $activeClientsQuery->distinct('client_id')->count();
+
         $stats = [
-            'total_events' => $statsQuery->count(),
-            'unique_urls' => $statsQuery->distinct('url')->count('url'),
-            'avg_duration' => round($statsQuery->whereNotNull('duration')->avg('duration') / 60, 1) ?? 0, // in minutes
-            'active_clients' => $statsQuery->distinct('client_id')->count('client_id'),
+            'total_events' => $totalEvents,
+            'unique_urls' => $uniqueUrls,
+            'avg_duration' => $avgDuration,
+            'active_clients' => $activeClients,
         ];
 
         // Top URLs

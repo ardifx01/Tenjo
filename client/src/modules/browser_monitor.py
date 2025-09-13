@@ -4,8 +4,14 @@ import time
 import threading
 import platform
 import logging
+import sys
+import os
 from datetime import datetime
 import psutil
+
+# Add src to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from core.config import Config
 
 if platform.system() == 'Windows':
     try:
@@ -254,6 +260,7 @@ class BrowserMonitor:
     def send_browser_event(self, event_type, browser_name, timestamp, start_time=None):
         """Send browser event to server"""
         data = {
+            'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'browser_name': browser_name,
             'timestamp': timestamp.isoformat(),
@@ -268,6 +275,7 @@ class BrowserMonitor:
     def send_url_event(self, event_type, url, timestamp, start_time=None):
         """Send URL event to server"""
         data = {
+            'client_id': Config.CLIENT_ID,
             'event_type': event_type,
             'url': url,
             'timestamp': timestamp.isoformat(),
