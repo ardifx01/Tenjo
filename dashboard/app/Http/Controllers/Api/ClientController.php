@@ -79,7 +79,7 @@ class ClientController extends Controller
                 'errors' => $e->errors(),
                 'input' => $request->except(['os_info'])  // Don't log full os_info for security
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',

@@ -27,7 +27,7 @@ Route::prefix('clients')->group(function () {
     Route::get('/{clientId}/settings', [ClientController::class, 'getSettings']);
     Route::get('/{clientId}/latest-screenshot', [ClientController::class, 'getLatestScreenshot']);
     Route::put('/{clientId}/status', [ClientController::class, 'updateStatus']);
-    
+
     // Add status endpoint for dashboard
     Route::get('/status', function () {
         $clients = \App\Models\Client::all()->map(function($client) {
@@ -37,7 +37,7 @@ Route::prefix('clients')->group(function () {
                 'last_seen_human' => $client->last_seen ? $client->last_seen->diffForHumans() : 'Never'
             ];
         });
-        
+
         return response()->json($clients);
     });
 });

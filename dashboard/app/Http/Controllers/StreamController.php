@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class StreamController extends Controller
@@ -135,11 +136,11 @@ class StreamController extends Controller
     {
         // For production, try to get latest screenshot as fallback
         $client = Client::where('client_id', $clientId)->first();
-        
+
         if (!$client) {
             return response()->json(['error' => 'Client not found'], 404);
         }
-        
+
         // Try to get cached chunk first
         $chunk = cache()->get("latest_chunk_{$clientId}");
 
@@ -151,14 +152,14 @@ class StreamController extends Controller
         $latestScreenshot = $client->screenshots()
             ->orderBy('captured_at', 'desc')
             ->first();
-            
+
         if ($latestScreenshot && $latestScreenshot->hasValidFilePath()) {
             try {
                 $imagePath = storage_path('app/public/' . $latestScreenshot->file_path);
-                
+
                 if (file_exists($imagePath)) {
                     $imageData = base64_encode(file_get_contents($imagePath));
-                    
+
                     return response()->json([
                         'data' => $imageData,
                         'sequence' => time(),
@@ -168,10 +169,10 @@ class StreamController extends Controller
                     ]);
                 }
             } catch (\Exception $e) {
-                \Log::error("Error reading screenshot file: " . $e->getMessage());
+                Log::error("Error reading screenshot file: " . $e->getMessage());
             }
         }
-        
+
         return response()->json(['error' => 'No stream data available'], 404);
     }
 }

