@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\ProcessEventController;
 use App\Http\Controllers\Api\UrlEventController;
 use App\Http\Controllers\StreamController;
 
+// Add CORS middleware for production
+Route::middleware(['cors'])->group(function () {
+
 // Activity export
 Route::get('/activities/export', [ClientController::class, 'exportActivities']);
 
@@ -24,6 +27,19 @@ Route::prefix('clients')->group(function () {
     Route::get('/{clientId}/settings', [ClientController::class, 'getSettings']);
     Route::get('/{clientId}/latest-screenshot', [ClientController::class, 'getLatestScreenshot']);
     Route::put('/{clientId}/status', [ClientController::class, 'updateStatus']);
+    
+    // Add status endpoint for dashboard
+    Route::get('/status', function () {
+        $clients = \App\Models\Client::all()->map(function($client) {
+            return [
+                'client_id' => $client->client_id,
+                'is_online' => $client->isOnline(),
+                'last_seen_human' => $client->last_seen ? $client->last_seen->diffForHumans() : 'Never'
+            ];
+        });
+        
+        return response()->json($clients);
+    });
 });
 
 // Streaming endpoints
@@ -91,3 +107,5 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 });
+
+}); // End CORS middleware group

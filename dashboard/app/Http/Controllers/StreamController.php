@@ -133,12 +133,45 @@ class StreamController extends Controller
 
     public function getLatestChunk($clientId)
     {
+        // For production, try to get latest screenshot as fallback
+        $client = Client::where('client_id', $clientId)->first();
+        
+        if (!$client) {
+            return response()->json(['error' => 'Client not found'], 404);
+        }
+        
+        // Try to get cached chunk first
         $chunk = cache()->get("latest_chunk_{$clientId}");
 
         if ($chunk) {
             return response()->json($chunk);
         }
 
+        // Fallback to latest screenshot
+        $latestScreenshot = $client->screenshots()
+            ->orderBy('captured_at', 'desc')
+            ->first();
+            
+        if ($latestScreenshot && $latestScreenshot->hasValidFilePath()) {
+            try {
+                $imagePath = storage_path('app/public/' . $latestScreenshot->file_path);
+                
+                if (file_exists($imagePath)) {
+                    $imageData = base64_encode(file_get_contents($imagePath));
+                    
+                    return response()->json([
+                        'data' => $imageData,
+                        'sequence' => time(),
+                        'timestamp' => $latestScreenshot->captured_at,
+                        'resolution' => $latestScreenshot->resolution,
+                        'type' => 'screenshot_fallback'
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error reading screenshot file: " . $e->getMessage());
+            }
+        }
+        
         return response()->json(['error' => 'No stream data available'], 404);
     }
 }
