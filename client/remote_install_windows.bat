@@ -9,7 +9,7 @@ set "APP_NAME=TenjoClient"
 set "INSTALL_DIR=%USERPROFILE%\.tenjo"
 set "SERVICE_NAME=TenjoMonitor"
 set "PYTHON_VENV=%INSTALL_DIR%\.venv"
-set "SERVER_URL=http://127.0.0.1:8000"
+set "SERVER_URL=http://103.129.149.67"
 set "API_KEY=tenjo-api-key-2024"
 set "GITHUB_REPO=https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master"
 
