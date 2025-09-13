@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Tenjo Stealth Uninstaller for macOS
+# Tenjo Stealth Uninstaller for macOS - Clean Version
 # This script completely removes Tenjo monitoring system from the target machine
 # Usage: curl -s https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/quick_uninstall_stealth_macos.sh | bash
 
-echo "🗑️  Starting Tenjo stealth uninstall process..."
+echo "🗑️ Starting Tenjo stealth uninstall process..."
 
 # Define paths
 INSTALL_DIR="$HOME/.config/system-utils"
@@ -49,133 +49,163 @@ stop_tenjo_process() {
 
 # Function to unload and remove LaunchAgent
 remove_launch_agent() {
-    echo "🚫 Removing auto-start configuration..."
+    echo "📱 Removing LaunchAgent..."
     
-    if [ -f "$LAUNCH_AGENT_FILE" ]; then
-        # Unload the launch agent
+    if [[ -f "$LAUNCH_AGENT_FILE" ]]; then
+        show_progress "   Unloading service"
         run_silent launchctl unload "$LAUNCH_AGENT_FILE"
         
-        # Remove the plist file
-        run_silent rm -f "$LAUNCH_AGENT_FILE"
+        show_progress "   Removing plist file"
+        rm -f "$LAUNCH_AGENT_FILE"
         
-        echo "✅ Auto-start configuration removed"
+        echo "✅ LaunchAgent removed"
     else
-        echo "ℹ️  No auto-start configuration found"
+        echo "ℹ️  LaunchAgent not found (already removed)"
     fi
 }
 
-# Function to remove installation directory
-remove_files() {
+# Function to remove installation files
+remove_installation() {
     echo "📁 Removing installation files..."
     
-    if [ -d "$INSTALL_DIR" ]; then
-        run_silent rm -rf "$INSTALL_DIR"
-        echo "✅ Installation directory removed"
+    if [[ -d "$INSTALL_DIR" ]]; then
+        show_progress "   Removing application files"
+        rm -rf "$INSTALL_DIR"
+        echo "✅ Installation files removed"
     else
-        echo "ℹ️  Installation directory not found"
-    fi
-    
-    # Remove log directory
-    if [ -d "$LOG_DIR" ]; then
-        run_silent rm -rf "$LOG_DIR"
-        echo "✅ Log directory removed"
+        echo "ℹ️  Installation directory not found (already removed)"
     fi
 }
 
-# Function to clean up any remaining traces
-cleanup_traces() {
-    echo "🧹 Cleaning up remaining traces..."
+# Function to remove logs
+remove_logs() {
+    echo "📋 Removing log files..."
     
-    # Remove specific cached Python files in limited locations
-    show_progress "   Cleaning cache files"
-    run_silent find "$HOME/.cache" -name "*tenjo*" -type f -delete 2>/dev/null || true
-    run_silent find "$HOME/.cache" -name "*system-utils*" -type f -delete 2>/dev/null || true
+    if [[ -d "$LOG_DIR" ]]; then
+        show_progress "   Cleaning log directory"
+        rm -rf "$LOG_DIR"
+        echo "✅ Log files removed"
+    else
+        echo "ℹ️  Log directory not found (already removed)"
+    fi
     
-    # Remove from common temp locations only
-    show_progress "   Cleaning temporary files"
-    run_silent rm -rf /tmp/tenjo* 2>/dev/null || true
-    run_silent rm -rf /tmp/system-utils* 2>/dev/null || true
-    run_silent rm -rf "$HOME/Library/Caches/tenjo"* 2>/dev/null || true
-    run_silent rm -rf "$HOME/Library/Caches/system-utils"* 2>/dev/null || true
-    
-    echo "✅ Traces cleaned"
+    # Also remove any logs in installation directory
+    run_silent rm -rf "$HOME/.config/system-utils/logs"
 }
 
-# Function to verify uninstallation
-verify_uninstall() {
-    echo "🔍 Verifying uninstallation..."
+# Function to clean cache and temp files
+clean_cache() {
+    echo "🧹 Cleaning cache and temporary files..."
     
-    local issues=0
+    show_progress "   Removing cache files"
+    run_silent rm -rf "$HOME/.cache/tenjo"*
+    run_silent rm -rf "/tmp/tenjo"*
+    run_silent rm -rf "/tmp/system-utils"*
     
-    # Check if LaunchAgent exists
-    if [ -f "$LAUNCH_AGENT_FILE" ]; then
+    echo "✅ Cache cleaned"
+}
+
+# Function to verify complete removal
+verify_removal() {
+    echo "🔍 Verifying complete removal..."
+    
+    local issues_found=0
+    
+    # Check LaunchAgent
+    if [[ -f "$LAUNCH_AGENT_FILE" ]]; then
         echo "⚠️  LaunchAgent still exists: $LAUNCH_AGENT_FILE"
-        issues=$((issues + 1))
+        ((issues_found++))
     fi
     
-    # Check if installation directory exists
-    if [ -d "$INSTALL_DIR" ]; then
+    # Check installation directory
+    if [[ -d "$INSTALL_DIR" ]]; then
         echo "⚠️  Installation directory still exists: $INSTALL_DIR"
-        issues=$((issues + 1))
+        ((issues_found++))
     fi
     
-    # Check if any Tenjo processes are running
-    if pgrep -f "stealth_main.py" >/dev/null 2>&1; then
-        echo "⚠️  Tenjo processes still running"
-        issues=$((issues + 1))
+    # Check running processes
+    local running_processes=$(pgrep -f "tenjo\|stealth\|system-utils" 2>/dev/null | wc -l)
+    if [[ $running_processes -gt 0 ]]; then
+        echo "⚠️  $running_processes related processes still running"
+        ((issues_found++))
     fi
     
-    if [ $issues -eq 0 ]; then
-        echo "✅ Uninstallation verified successfully"
-        echo "🎉 Tenjo has been completely removed from this system"
+    # Check service status
+    local service_loaded=$(launchctl list | grep systemupdater 2>/dev/null | wc -l)
+    if [[ $service_loaded -gt 0 ]]; then
+        echo "⚠️  Service still loaded in launchctl"
+        ((issues_found++))
+    fi
+    
+    if [[ $issues_found -eq 0 ]]; then
+        echo "✅ Complete removal verified"
         return 0
     else
-        echo "❌ Uninstallation incomplete - $issues issues found"
+        echo "⚠️  $issues_found issues found during verification"
         return 1
     fi
 }
 
-# Main uninstallation process
+# Main uninstall process
 main() {
-    echo "🔧 Tenjo Stealth Uninstaller v1.0"
-    echo "=================================="
+    echo ""
+    echo "🚀 Starting complete Tenjo removal process..."
+    echo "============================================="
     
-    # Stop all Tenjo processes
+    # Step 1: Stop all processes
     stop_tenjo_process
+    echo ""
     
-    # Remove LaunchAgent
+    # Step 2: Remove LaunchAgent
     remove_launch_agent
+    echo ""
     
-    # Remove installation files
-    remove_files
+    # Step 3: Remove installation files
+    remove_installation
+    echo ""
     
-    # Clean up traces
-    cleanup_traces
+    # Step 4: Remove logs
+    remove_logs
+    echo ""
     
-    # Verify uninstallation
-    if verify_uninstall; then
+    # Step 5: Clean cache
+    clean_cache
+    echo ""
+    
+    # Step 6: Verify removal
+    if verify_removal; then
         echo ""
-        echo "🎯 UNINSTALLATION COMPLETE"
-        echo "=========================="
+        echo "🎉 UNINSTALL COMPLETED SUCCESSFULLY!"
+        echo "===================================="
         echo "✅ All Tenjo components have been removed"
-        echo "✅ Auto-start disabled"
-        echo "✅ All files and logs deleted"
-        echo "✅ System restored to original state"
+        echo "✅ System has been restored to clean state"
+        echo "✅ No traces of monitoring software remain"
         echo ""
-        echo "💡 The system is now clean and monitoring has been stopped."
+        echo "📊 Removal Summary:"
+        echo "   🔄 Processes stopped: All"
+        echo "   📱 LaunchAgent removed: Yes"
+        echo "   📁 Files removed: All"
+        echo "   📋 Logs cleaned: Yes"
+        echo "   🧹 Cache cleared: Yes"
+        echo ""
+        echo "🔒 Your system is now clean and secure."
     else
         echo ""
-        echo "⚠️  UNINSTALLATION ISSUES DETECTED"
-        echo "==================================="
-        echo "Some components may still exist. Please check manually:"
-        echo "- LaunchAgent: $LAUNCH_AGENT_FILE"
-        echo "- Install Dir: $INSTALL_DIR"
-        echo "- Running processes: ps aux | grep tenjo"
+        echo "⚠️  UNINSTALL COMPLETED WITH WARNINGS"
+        echo "===================================="
+        echo "Some components may still exist on the system."
+        echo "Please check the warnings above and remove manually if needed."
+        echo ""
+        echo "Manual cleanup commands (if needed):"
+        echo "   sudo launchctl unload $LAUNCH_AGENT_FILE"
+        echo "   sudo rm -f $LAUNCH_AGENT_FILE"
+        echo "   sudo rm -rf $INSTALL_DIR"
+        echo "   sudo pkill -f tenjo"
     fi
 }
 
 # Run main function
 main
 
-# Exit with success
+# Exit successfully
 exit 0
