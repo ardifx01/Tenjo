@@ -24,6 +24,7 @@ if platform.system() == 'Windows':
         gw = None
         win32gui = None
         win32process = None
+        logging.warning("Windows-specific modules not available")
 elif platform.system() == 'Darwin':
     try:
         from AppKit import NSWorkspace
@@ -33,9 +34,11 @@ elif platform.system() == 'Darwin':
         MACOS_AVAILABLE = False
         NSWorkspace = None
         Quartz = None
+        logging.warning("macOS-specific modules not available")
 else:
     WINDOWS_AVAILABLE = False
     MACOS_AVAILABLE = False
+    logging.info("Platform-specific window modules not needed")
 
 class BrowserMonitor:
     def __init__(self, api_client):

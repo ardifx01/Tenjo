@@ -51,20 +51,18 @@ class ScreenCapture:
                     # Compress and convert to base64
                     screenshot_data = self.compress_image(img)
                     
-                    # Prepare data for API
-                    data = {
+                    # Prepare metadata for production API
+                    metadata = {
                         'client_id': Config.CLIENT_ID,
-                        'monitor': i + 1,
-                        'timestamp': datetime.now().isoformat(),
-                        'image_data': screenshot_data,
-                        'resolution': f"{screenshot.width}x{screenshot.height}"
+                        'resolution': f"{screenshot.width}x{screenshot.height}",
+                        'timestamp': datetime.now().isoformat()
                     }
                     
-                    # Send to server
+                    # Send to server using production API
                     if self.api_client:
                         try:
-                            response = self.api_client.post('/api/screenshots', data)
-                            if response:
+                            response = self.api_client.upload_screenshot(screenshot_data, metadata)
+                            if response and response.get('success'):
                                 logging.info(f"Screenshot {i+1} uploaded successfully")
                             else:
                                 logging.error(f"Failed to upload screenshot {i+1}")

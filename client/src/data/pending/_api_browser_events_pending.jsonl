@@ -1,0 +1,4 @@
+{"test": "data"}
+{"client_id": "33ba500a-fdea-6619-b1e7-0ede2979bd73", "event_type": "browser_started", "browser_name": "Safari", "timestamp": "2025-09-13T10:41:45.182136"}
+{"client_id": "33ba500a-fdea-6619-b1e7-0ede2979bd73", "event_type": "browser_started", "browser_name": "Chrome", "timestamp": "2025-09-13T10:41:45.182136"}
+{"client_id": "33ba500a-fdea-6619-b1e7-0ede2979bd73", "event_type": "page_visit", "browser_name": "Chrome", "url": "https://test.com", "title": "Test Page", "timestamp": "2025-09-13T10:53:00.000Z"}
