@@ -266,6 +266,14 @@
         "documentation": {}
     },
     {
+        "label": "Config",
+        "importPath": "core.config",
+        "description": "core.config",
+        "isExtraImport": true,
+        "detail": "core.config",
+        "documentation": {}
+    },
+    {
         "label": "defaultdict",
         "importPath": "collections",
         "description": "collections",
@@ -736,6 +744,15 @@
         "description": "client.main",
         "peekOfCode": "shutdown_flag = False\ndef signal_handler(signum, frame):\n    \"\"\"Handle shutdown signals gracefully\"\"\"\n    global shutdown_flag\n    logging.info(f\"Received signal {signum}, initiating graceful shutdown...\")\n    shutdown_flag = True\nclass TenjoClient:\n    def __init__(self, stealth_mode=True):\n        # Use API_ENDPOINT from config\n        self.api_client = APIClient(Config.SERVER_URL, Config.CLIENT_ID)",
         "detail": "client.main",
+        "documentation": {}
+    },
+    {
+        "label": "test_auto_video_config",
+        "kind": 2,
+        "importPath": "client.test_auto_video",
+        "description": "client.test_auto_video",
+        "peekOfCode": "def test_auto_video_config():\n    \"\"\"Test auto video streaming configuration\"\"\"\n    print(\"Testing Auto Video Streaming Configuration:\")\n    print(f\"AUTO_START_VIDEO_STREAMING: {Config.AUTO_START_VIDEO_STREAMING}\")\n    print(f\"CLIENT_ID: {Config.CLIENT_ID}\")\n    print(f\"SERVER_URL: {Config.SERVER_URL}\")\n    # Test environment variable override\n    os.environ['TENJO_AUTO_VIDEO'] = 'false'\n    # Need to reload config for env var to take effect\n    import importlib",
+        "detail": "client.test_auto_video",
         "documentation": {}
     },
     {

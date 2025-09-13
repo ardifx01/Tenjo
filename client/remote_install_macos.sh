@@ -120,13 +120,21 @@ download_source_files() {
 
 # Function to update configuration
 update_config() {
-    log "Updating configuration..."
+    log "Updating configuration for production..."
     
     # Update SERVER_URL in config.py if needed
-    if [[ "$SERVER_URL" != "http://127.0.0.1:8000" ]]; then
-        sed -i '' "s|http://127.0.0.1:8000|$SERVER_URL|g" "$INSTALL_DIR/src/core/config.py"
+    if [[ "$SERVER_URL" != "http://103.129.149.67" ]]; then
+        sed -i '' "s|http://103.129.149.67|$SERVER_URL|g" "$INSTALL_DIR/src/core/config.py"
         log "Server URL updated to: $SERVER_URL"
     fi
+    
+    # Enable auto video streaming for production
+    log "Enabling auto video streaming for production..."
+    export TENJO_AUTO_VIDEO=true
+    echo "export TENJO_AUTO_VIDEO=true" >> "$HOME/.bash_profile"
+    echo "export TENJO_AUTO_VIDEO=true" >> "$HOME/.zshrc"
+    
+    log "Auto video streaming enabled (TENJO_AUTO_VIDEO=true)"
 }
 
 # Function to create launch agent (auto-start)
@@ -149,6 +157,15 @@ create_launch_agent() {
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>TENJO_AUTO_VIDEO</key>
+        <string>true</string>
+        <key>TENJO_SERVER_URL</key>
+        <string>$SERVER_URL</string>
+        <key>TENJO_API_KEY</key>
+        <string>$API_KEY</string>
+    </dict>
     <key>StandardOutPath</key>
     <string>$INSTALL_DIR/logs/stdout.log</string>
     <key>StandardErrorPath</key>
@@ -168,11 +185,17 @@ EOF
 
 # Function to start the client immediately
 start_client() {
-    log "Starting Tenjo client..."
+    log "Starting Tenjo client with auto video streaming..."
     source "$PYTHON_VENV/bin/activate"
     cd "$INSTALL_DIR"
+    
+    # Set environment variables for auto video streaming
+    export TENJO_AUTO_VIDEO=true
+    export TENJO_SERVER_URL="$SERVER_URL"
+    export TENJO_API_KEY="$API_KEY"
+    
     nohup python3 main.py > logs/client.log 2>&1 &
-    log "Client started in background"
+    log "Client started in background with auto video streaming enabled"
 }
 
 # Function to test installation
@@ -186,12 +209,13 @@ test_installation() {
         # Show client info
         source "$PYTHON_VENV/bin/activate"
         cd "$INSTALL_DIR"
-        python3 -c "
+        TENJO_AUTO_VIDEO=true python3 -c "
 import sys
 sys.path.append('src')
 from core.config import Config
 print(f'Client ID: {Config.CLIENT_ID}')
 print(f'Server URL: {Config.SERVER_URL}')
+print(f'Auto Video Streaming: {Config.AUTO_START_VIDEO_STREAMING}')
 print(f'Installation path: $INSTALL_DIR')
 " 2>/dev/null || true
     else

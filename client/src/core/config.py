@@ -49,6 +49,7 @@ class Config:
     BROWSER_MONITORING = True
     PROCESS_MONITORING = True
     STEALTH_MODE = True
+    AUTO_START_VIDEO_STREAMING = os.getenv('TENJO_AUTO_VIDEO', 'true').lower() == 'true'  # Auto-start video streaming for production
 
     # Paths
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

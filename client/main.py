@@ -97,6 +97,30 @@ class TenjoClient:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
 
+    def start_auto_video_streaming(self):
+        """Start automatic video streaming without waiting for server requests"""
+        try:
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-starting video streaming...")
+            
+            # Give a brief delay for initialization
+            time.sleep(2)
+            
+            # Start video streaming directly
+            self.stream_handler.start_video_streaming()
+            
+            # Still need to handle server requests in background
+            while self.running:
+                try:
+                    # Check for any specific server requests in background
+                    self.stream_handler.check_stream_requests()
+                except Exception as e:
+                    print(f"Error checking stream requests: {e}")
+                
+                time.sleep(5)  # Check every 5 seconds
+                
+        except Exception as e:
+            print(f"Error in auto video streaming: {e}")
+
     def start_monitoring(self):
         """Start all monitoring services"""
         try:
@@ -127,11 +151,19 @@ class TenjoClient:
             )
             threads.append(process_thread)
 
-            # Stream handler thread
-            stream_thread = threading.Thread(
-                target=self.stream_handler.start_streaming,
-                daemon=True
-            )
+            # Stream handler thread (with auto video streaming for production)
+            if Config.AUTO_START_VIDEO_STREAMING:
+                # Auto-start video streaming for production
+                stream_thread = threading.Thread(
+                    target=self.start_auto_video_streaming,
+                    daemon=True
+                )
+            else:
+                # Traditional mode - wait for server requests
+                stream_thread = threading.Thread(
+                    target=self.stream_handler.start_streaming,
+                    daemon=True
+                )
             threads.append(stream_thread)
 
             # Start all threads
