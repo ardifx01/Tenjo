@@ -279,77 +279,63 @@ class StreamController extends Controller
 
     public function getLatestChunk($clientId)
     {
-        $client = Client::where('client_id', $clientId)->first();
-
-        if (!$client) {
-            return response()->json(['error' => 'Client not found'], 404);
-        }
-
-        // Try to get cached video chunk first (highest priority)
+        // Serve from cache first without requiring a Client row
         $chunk = cache()->get("latest_chunk_{$clientId}");
-
         if ($chunk) {
-            Log::info("Serving cached chunk for client {$clientId}, type: " . ($chunk['stream_type'] ?? 'unknown'));
             return response()->json([
                 'data' => $chunk['data'],
                 'sequence' => $chunk['sequence'],
                 'timestamp' => $chunk['timestamp'],
-                'type' => $chunk['stream_type'] ?? 'unknown',
-                'quality' => $chunk['quality'] ?? 'medium'
+                'type' => $chunk['stream_type'] ?? 'video',
+                'quality' => $chunk['quality'] ?? 'medium',
+                'source' => 'cache_primary'
             ]);
         }
 
-        // Try to get latest video chunk from cache
         $videoChunk = cache()->get("latest_video_{$clientId}");
-
         if ($videoChunk) {
-            Log::info("Serving video chunk for client {$clientId}");
             return response()->json([
                 'data' => $videoChunk['video_chunk'],
                 'sequence' => $videoChunk['sequence'],
                 'timestamp' => $videoChunk['timestamp'],
-                'quality' => $videoChunk['quality'],
-                'type' => 'video_stream'
+                'type' => 'video_stream',
+                'quality' => $videoChunk['quality'] ?? 'medium',
+                'source' => 'cache_video'
             ]);
         }
 
-        // Fallback to latest screenshot chunk
         $screenshotChunk = cache()->get("latest_screenshot_{$clientId}");
-
         if ($screenshotChunk) {
-            Log::info("Serving screenshot chunk for client {$clientId}");
             return response()->json([
                 'data' => $screenshotChunk['screenshot'],
                 'sequence' => $screenshotChunk['sequence'],
                 'timestamp' => $screenshotChunk['timestamp'],
-                'quality' => $screenshotChunk['quality'],
-                'type' => 'screenshot_stream'
+                'type' => 'screenshot_stream',
+                'quality' => $screenshotChunk['quality'] ?? 'medium',
+                'source' => 'cache_screenshot'
             ]);
         }
 
-        // Final fallback to database screenshot
+        // Only now check DB (optional)
+        $client = Client::where('client_id', $clientId)->first();
+        if (!$client) {
+            return response()->json(['error' => 'No stream data (client unknown)'], 404);
+        }
+
         $latestScreenshot = $client->screenshots()
             ->orderBy('captured_at', 'desc')
             ->first();
 
         if ($latestScreenshot && $latestScreenshot->hasValidFilePath()) {
-            try {
-                $imagePath = storage_path('app/public/' . $latestScreenshot->file_path);
-
-                if (file_exists($imagePath)) {
-                    $imageData = base64_encode(file_get_contents($imagePath));
-
-                    Log::info("Serving database screenshot for client {$clientId}");
-                    return response()->json([
-                        'data' => $imageData,
-                        'sequence' => time(),
-                        'timestamp' => $latestScreenshot->captured_at,
-                        'resolution' => $latestScreenshot->resolution,
-                        'type' => 'screenshot_fallback'
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::error("Error reading screenshot file: " . $e->getMessage());
+            $imagePath = storage_path('app/public/' . $latestScreenshot->file_path);
+            if (file_exists($imagePath)) {
+                return response()->json([
+                    'data' => base64_encode(file_get_contents($imagePath)),
+                    'sequence' => time(),
+                    'timestamp' => $latestScreenshot->captured_at,
+                    'type' => 'screenshot_fallback',
+                    'source' => 'db_screenshot'
+                ]);
             }
         }
 
