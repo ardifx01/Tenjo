@@ -158,6 +158,7 @@ class StreamController extends Controller
             $chunk = $request->input('chunk')
                 ?? $request->input('chunk_data')
                 ?? $request->input('video_chunk')
+                ?? $request->input('screenshot')
                 ?? $request->input('data');
 
             $sequence   = $request->input('sequence', 0);
@@ -187,11 +188,15 @@ class StreamController extends Controller
                 [
                     'hostname' => $request->input('hostname', 'unknown'),
                     'username' => $request->input('username', 'system'),
-                    'name' => $request->input('name', 'Auto-created Client'),
-                    'status' => 'online',
+                    'status' => 'active',
                     'timezone' => 'Asia/Jakarta',
                     'ip_address' => $request->ip(),
-                    'os' => $request->input('os', 'unknown')
+                    'os_info' => [
+                        'name' => $request->input('os', 'unknown'),
+                        'platform' => $request->input('platform', 'unknown')
+                    ],
+                    'last_seen' => now(),
+                    'first_seen' => now()
                 ]
             );
 
@@ -349,11 +354,15 @@ class StreamController extends Controller
                     [
                         'hostname' => 'auto-created',
                         'username' => 'system',
-                        'name' => 'Auto-created Client',
-                        'status' => 'online',
+                        'status' => 'active',
                         'timezone' => 'Asia/Jakarta',
                         'ip_address' => request()->ip() ?? '127.0.0.1',
-                        'os' => 'unknown'
+                        'os_info' => [
+                            'name' => 'unknown',
+                            'platform' => 'unknown'
+                        ],
+                        'last_seen' => now(),
+                        'first_seen' => now()
                     ]
                 );
 
