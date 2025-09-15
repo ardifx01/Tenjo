@@ -144,20 +144,45 @@ class StreamController extends Controller
 
     public function uploadStreamChunk(Request $request, $clientId)
     {
-        $chunk = $request->input('chunk');
-        $sequence = $request->input('sequence', 0);
-        $streamType = $request->input('stream_type', 'video');
-        $quality = $request->input('quality', 'medium');
+        // Enhanced multi-key extraction + debug
+        if ($request->header('X-Chunk-Debug') === '1') {
+            Log::debug('uploadStreamChunk raw inbound', [
+                'client_id' => $clientId,
+                'content_type' => $request->header('Content-Type'),
+                'keys' => array_keys($request->all()),
+                'raw_len' => strlen($request->getContent()),
+            ]);
+        }
 
-        if (!$chunk) {
+        $chunk = $request->input('chunk')
+            ?? $request->input('chunk_data')
+            ?? $request->input('video_chunk')
+            ?? $request->input('data');
+
+        $sequence   = $request->input('sequence', 0);
+        $streamType = $request->input('stream_type', 'video');
+        $quality    = $request->input('quality', 'medium');
+
+        if (empty($chunk)) {
+            Log::warning('uploadStreamChunk missing chunk data', [
+                'client_id' => $clientId,
+                'received_keys' => array_keys($request->all())
+            ]);
             return response()->json(['error' => 'No chunk data'], 400);
         }
 
-        // Store chunk temporarily
+        // Basic base64 validation
+        if (base64_decode($chunk, true) === false) {
+            Log::warning('uploadStreamChunk invalid base64', [
+                'client_id' => $clientId,
+                'sequence' => $sequence
+            ]);
+            return response()->json(['error' => 'Invalid chunk format'], 400);
+        }
+
         $chunkPath = "stream_chunks/{$clientId}/{$sequence}.chunk";
         Storage::put($chunkPath, base64_decode($chunk));
 
-        // Store latest chunk for getLatestChunk to access (FIXED: using correct cache key)
         cache()->put("latest_chunk_{$clientId}", [
             'data' => $chunk,
             'sequence' => $sequence,
@@ -166,7 +191,6 @@ class StreamController extends Controller
             'stream_type' => $streamType
         ], 60);
 
-        // Also store as latest video/screenshot for specific access
         if ($streamType === 'video') {
             cache()->put("latest_video_{$clientId}", [
                 'video_chunk' => $chunk,
@@ -177,12 +201,15 @@ class StreamController extends Controller
             ], 60);
         }
 
-        // Broadcast to connected clients via Server-Sent Events
         $this->broadcastChunk($clientId, $chunk, $sequence, $streamType);
 
-        Log::info("Stream chunk received from client {$clientId}, sequence: {$sequence}, type: {$streamType}");
+        Log::info("Stream chunk stored", [
+            'client_id' => $clientId,
+            'sequence' => $sequence,
+            'type' => $streamType
+        ]);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'sequence' => $sequence]);
     }
 
     public function streamEvents($clientId)
