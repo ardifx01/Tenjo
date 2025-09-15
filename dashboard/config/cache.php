@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', env('CACHE_DRIVER', 'redis')),
+    'default' => env('CACHE_DRIVER', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -76,8 +76,6 @@ return [
             'connection' => 'cache',
         ],
 
-        'prefix' => env('CACHE_PREFIX', 'tenjo_cache'),
-
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -104,6 +102,6 @@ return [
     |
     */
 
-    'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
+    'prefix' => env('CACHE_PREFIX', 'tenjo_cache:'),
 
 ];
